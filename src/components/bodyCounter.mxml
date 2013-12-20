@@ -1,0 +1,382 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+					  xmlns:s="library://ns.adobe.com/flex/spark">
+	
+	<fx:Script>
+		<![CDATA[
+			import customEvents.DroppedMealEvent;
+			import customEvents.LogActionEvent;
+			import customEvents.UndoButtonEvent;
+			
+			import mx.utils.UIDUtil;
+			
+			import views.main;
+			
+			private static const drinkUnit:Number = 125;
+			private static const drinkMax:Number = 2500;
+			private static const foodUnit:Number = 1;
+			private static const foodMax:Number = 4;
+			
+			private static const FOOD1_MIN:uint = 0xE86045;
+			private static const FOOD1_MAX:uint = 0xF37F64;
+			private static const FOOD2_MIN:uint = 0xF2965A;
+			private static const FOOD2_MAX:uint = 0xFAD99A;
+			private static const FOOD3_MIN:uint = 0xC1D898;
+			private static const FOOD3_MAX:uint = 0xE5E99D;
+			private static const FOOD4_MIN:uint = 0x37AE7C;
+			private static const FOOD4_MAX:uint = 0xC6E1BB;
+			private static const FOOD5_MIN:uint = 0x85BF69;
+			private static const FOOD5_MAX:uint = 0xC0DE9B;
+			private static const FOOD6_MIN:uint = 0x72B52C;
+			private static const FOOD6_MAX:uint = 0xC1DD3A;
+			
+			private static const DRINK1_MIN:uint = 0x3A1F4F;
+			private static const DRINK1_MAX:uint = 0x673691;
+			private static const DRINK2_MIN:uint = 0x452461;
+			private static const DRINK2_MAX:uint = 0x6A50A3;
+			private static const DRINK3_MIN:uint = 0x47386E;
+			private static const DRINK3_MAX:uint = 0x6A50A3;
+			private static const DRINK4_MIN:uint = 0x474F7F;
+			private static const DRINK4_MAX:uint = 0x6793C6;
+			private static const DRINK5_MIN:uint = 0x45648F;
+			private static const DRINK5_MAX:uint = 0x61B7D0;
+			private static const DRINK6_MIN:uint = 0x417CA3;
+			private static const DRINK6_MAX:uint = 0x53BCD1;
+			private static const DRINK7_MIN:uint = 0x3C92B5;
+			private static const DRINK7_MAX:uint = 0x6FCEDD;
+			private static const DRINK8_MIN:uint = 0x4B9EBD;
+			private static const DRINK8_MAX:uint = 0x86D4E2;
+			private static const DRINK9_MIN:uint = 0x5AAAC6;
+			private static const DRINK9_MAX:uint = 0x98D9E6;
+			private static const DRINK10_MIN:uint = 0x75C0D5;
+			private static const DRINK10_MAX:uint = 0xC5E0E9;
+			
+			[Bindable] private var foodCounter:Number = 0;
+			[Bindable] private var drinkCounter:Number = 0;
+			
+			[Bindable] private var food_min:uint;
+			[Bindable] private var food_max:uint;
+			[Bindable] private var drink_min:uint;
+			[Bindable] private var drink_max:uint;
+			
+			[Embed(source="assets/sounds/alt1.mp3")]
+			[Bindable]
+			private var niceCls:Class;
+			private var snd:Sound = new niceCls() as Sound; 
+			private var sndChannel:SoundChannel;
+			
+			//private var so:SharedObject;
+			private var history:Dictionary;
+			private var foodList:Array;
+			private var mealtypeList:Array;
+			private var iconPath:String = null;
+			
+			private var today:Number;
+			private var foodName:String;
+			private var undoList:Array = new Array();
+			private var extraFood:Number = 0;
+			
+			private var dme:DroppedMealEvent;
+			
+			public function setTodaysCounter(f:Number, d:Number, e:Number, hist:Dictionary):void {
+				history = hist;
+				foodCounter = f;
+				drinkCounter = d;
+				extraFood = e;
+				updateCounterColors();
+			}
+			
+			private function updateCounterColors():void {
+				if(foodCounter >= 75) {
+					food_max = FOOD1_MAX;
+					food_min = FOOD1_MIN;
+					smiley.visible = false;
+				}
+				else if(foodCounter >= 50 && foodCounter < 75) {
+					food_max = FOOD2_MAX;
+					food_min = FOOD2_MIN;
+					smiley.visible = false;
+				}
+				else if(foodCounter >= 25 && foodCounter < 50) {
+					food_max = FOOD3_MAX;
+					food_min = FOOD3_MIN;
+					smiley.visible = false;
+				}
+				else if(foodCounter >= 0 && foodCounter < 25 && extraFood == 0) {
+					food_max = FOOD4_MAX;
+					food_min = FOOD4_MIN;
+					smiley.visible = true;
+				}
+				else if(foodCounter == 0 && extraFood == 1) {
+					food_max = FOOD5_MAX;
+					food_min = FOOD5_MIN;
+					smiley.visible = true;
+				}
+				else if(foodCounter == 0 && extraFood > 1) {
+					food_max = FOOD6_MAX;
+					food_min = FOOD6_MIN;
+					smiley.visible = true;
+				}
+				
+				if(drinkCounter >= 90) {
+					drink_max = DRINK1_MAX;
+					drink_min = DRINK1_MIN;
+				}
+				else if(drinkCounter >= 80 && drinkCounter < 90) {
+					drink_max = DRINK2_MAX;
+					drink_min = DRINK2_MIN;
+				}
+				else if(drinkCounter >= 70 && drinkCounter < 80) {
+					drink_max = DRINK3_MAX;
+					drink_min = DRINK3_MIN;
+				}
+				else if(drinkCounter >= 60 && drinkCounter < 70) {
+					drink_max = DRINK4_MAX;
+					drink_min = DRINK4_MIN;
+				}
+				else if(drinkCounter >= 50 && drinkCounter < 60) {
+					drink_max = DRINK5_MAX;
+					drink_min = DRINK5_MIN;
+				}
+				else if(drinkCounter >= 40 && drinkCounter < 50) {
+					drink_max = DRINK6_MAX;
+					drink_min = DRINK6_MIN;
+				}
+				else if(drinkCounter >= 30 && drinkCounter < 40) {
+					drink_max = DRINK7_MAX;
+					drink_min = DRINK7_MIN;
+				}
+				else if(drinkCounter >= 20 && drinkCounter < 30) {
+					drink_max = DRINK8_MAX;
+					drink_min = DRINK8_MIN;
+				}
+				else if(drinkCounter >= 10 && drinkCounter < 20) {
+					drink_max = DRINK9_MAX;
+					drink_min = DRINK9_MIN;
+				}
+				else {
+					drink_max = DRINK10_MAX;
+					drink_min = DRINK10_MIN;
+				}
+			}
+			
+			public function countMealType(mealType:String, today:Number, foodName:String, recipeMealType:String, dmi:draggableMealItem):void {
+				this.today = today;
+				if(mealType == recipeMealType) {
+					this.foodName = foodName;
+				}
+				else {
+					this.foodName = "NO_SELECTION ("+mealType.toUpperCase()+")";
+				}
+				
+				if(dmi != null) {
+					iconPath = dmi.thumbPath;
+				}
+				else {
+					iconPath = null;
+				}
+				
+				var mtUdid:String = UIDUtil.createUID();
+				
+				undoList.push({mealType: mealType, udid: mtUdid});
+				if(undoList.length == 11) {
+					undoList.shift();										
+				}
+				
+				switch(mealType) {
+					case main.BREAKFAST:
+						updateFood(main.BREAKFAST, mtUdid);
+						break;
+					case main.SNACK1:
+						updateFood(main.SNACK1, mtUdid);
+						break;
+					case main.LUNCH:
+						updateFood(main.LUNCH, mtUdid);
+						break;
+					case main.DINNER:
+						updateFood(main.DINNER, mtUdid);
+						break;
+					case main.SNACK2:
+						updateFood(main.SNACK2, mtUdid);
+						break;
+					case main.EVENING:
+						updateFood(main.EVENING, mtUdid);
+						break;
+					case main.DRINK:
+						updateDrink();
+						break;
+				}
+			}
+			
+			private function updateFood(mealType:String, udid:String):void {
+				if(foodCounter > 0) {
+					foodCounter = foodCounter - (100/foodMax);	
+					//updateUndoButton(true);
+					
+					dme = new DroppedMealEvent(DroppedMealEvent.MEAL_DROP_OK_EVENT, true);
+					dme.mealType = mealType.toLowerCase();
+					dme.hasEaten = true;
+					dme.udid = udid;
+					
+					sndChannel = snd.play();	
+					updateHistory(dme);
+				}
+				else {
+					extraFood++;
+					//updateUndoButton(true);
+					
+					dme = new DroppedMealEvent(DroppedMealEvent.MEAL_DROP_OK_EVENT, true);
+					dme.mealType = mealType.toLowerCase();
+					dme.hasEaten = true;
+					dme.udid = udid;
+					
+					sndChannel=snd.play();	
+					updateHistory(dme);
+				}
+				updateCounterColors();
+			}
+			
+			private function updateDrink():void {
+				if(drinkCounter > 0) {
+					drinkCounter = drinkCounter - ((100*drinkUnit)/drinkMax);	
+					//updateUndoButton(true);
+					
+					sndChannel=snd.play();	
+					updateHistory(null);
+				}
+				updateCounterColors();
+			}
+			
+			public function undoLast():void {
+				var lasteaten:Object;
+				if(undoList.length > 0) {
+					lasteaten = undoList.pop();
+				
+					var lae:LogActionEvent = new LogActionEvent(LogActionEvent.LOG_ACTION, true);
+					lae.action = LogActionEvent.UNDO_ACTION + " - " + lasteaten.mealType;
+					lae.undoLast = true;
+					lae.mealtype = lasteaten.mealType.toLowerCase();
+					dispatchEvent(lae);
+					
+					dme = new DroppedMealEvent(DroppedMealEvent.MEAL_DROP_OK_EVENT, true);
+					dme.mealType = lasteaten.mealType.toLowerCase();
+					dme.hasEaten = true;
+					dme.resetMeal = true;
+					dme.udid = lasteaten.udid;
+					
+					if(lasteaten.mealType != main.DRINK) {
+						if(extraFood > 0) {
+							extraFood--;
+						}
+						else {
+							foodCounter = foodCounter + (100/foodMax);
+						}
+					}
+					else {
+						drinkCounter = drinkCounter + ((100*drinkUnit)/drinkMax);
+					}
+					
+					updateHistory(dme, false);
+					updateCounterColors();
+				}
+				
+			}
+			
+			private function updateHistory(dme:DroppedMealEvent, add:Boolean = true):void {
+				var todayHist:Object = new Object();
+				todayHist.id = new Date().time;
+				todayHist.d = this.today;
+				todayHist.foodCounter = foodCounter;
+				todayHist.extraFood = extraFood;
+				todayHist.drinkCounter = drinkCounter;
+				
+				if(history[this.today] != null) {
+					if(history[this.today].foodList == null) {
+						foodList = new Array();
+					}
+					else {
+						foodList = history[this.today].foodList;
+					}
+					
+					if(history[this.today].mealtypeList == null) {
+						mealtypeList = new Array();
+					}
+					else {
+						mealtypeList = history[this.today].mealtypeList;
+					}
+				}
+				else {
+					foodList = new Array();
+					mealtypeList = new Array();
+				}
+				
+				if(add && dme != null) {
+					var mtlObject:Object = new Object();
+					mtlObject.mealtype = dme.mealType.toUpperCase();
+					mtlObject.thumbpath = iconPath;
+					mtlObject.udid = dme.udid;
+					foodList.push(foodName);
+					mealtypeList.push(mtlObject);
+				}
+				else if(!add && dme != null) {
+					foodList.pop();
+					
+					for each (var obj:Object in mealtypeList) {
+						if(obj.udid == dme.udid) {
+							mealtypeList.pop();
+							break;
+						}
+					}
+				}
+				
+				todayHist.foodList = foodList;
+				todayHist.mealtypeList = mealtypeList;
+				
+				history[this.today] = todayHist;
+				
+				if(dme != null) {
+					dme.history = history;
+					dispatchEvent(dme);
+				}
+				
+				appetitt.writeHistory(history);
+			}
+		]]>
+	</fx:Script>
+	
+	
+	<s:Image source="@Embed('assets/graphics/smile.png')" smooth="true" smoothingQuality="high" horizontalCenter="0" top="-5" id="smiley" visible="false" />
+	
+	<s:HGroup width="100%" height="370" gap="0" bottom="0">
+		<s:Group width="100%" height="100%">
+			<s:Rect width="100%" height="100%">
+				<s:fill>
+					<s:LinearGradient rotation="90">
+						<s:GradientEntry color="{food_max}" />
+						<s:GradientEntry color="{food_min}" />
+					</s:LinearGradient>
+				</s:fill>
+			</s:Rect>
+			<s:Rect width="100%" percentHeight="{foodCounter}">
+				<s:fill>
+					<s:SolidColor color="#FFFFFF" />
+				</s:fill>
+			</s:Rect>
+		</s:Group>
+		<s:Group width="100%" height="100%">
+			<s:Rect width="100%" height="100%">
+				<s:fill>
+					<s:LinearGradient rotation="90">
+						<s:GradientEntry color="{drink_max}" />
+						<s:GradientEntry color="{drink_min}" />
+					</s:LinearGradient>
+				</s:fill>
+			</s:Rect>
+			<s:Rect width="100%" percentHeight="{drinkCounter}">
+				<s:fill>
+					<s:SolidColor color="#FFFFFF" />
+				</s:fill>
+			</s:Rect>
+		</s:Group>
+	</s:HGroup>
+</s:Group>

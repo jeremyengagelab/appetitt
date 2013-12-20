@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:ViewNavigatorApplication xmlns:fx="http://ns.adobe.com/mxml/2009" 
+							xmlns:s="library://ns.adobe.com/flex/spark" firstView="views.main" backgroundColor="#000000" creationComplete="viewnavigatorapplication1_creationCompleteHandler(event)" splashScreenImage="@Embed('assets/graphics/splash.png')" splashScreenScaleMode="letterbox">
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.events.FlexEvent;
+			
+			import spark.transitions.CrossFadeViewTransition;
+			
+			private var cft:CrossFadeViewTransition = new CrossFadeViewTransition();
+			
+			[Embed(source='assets/font/HelveticaNeueBold.ttf', 
+        		fontName='myhelveticabold', 
+        		mimeType='application/x-font',
+        		embedAsCFF='true'
+     		)]
+			private var helvebold:Class;
+			
+			[Embed(source='assets/font/HelveticaNeueLight.ttf', 
+        		fontName='myhelveticalight', 
+        		mimeType='application/x-font',
+        		embedAsCFF='true'
+     		)]
+			private var helvelight:Class;
+			
+			/**
+			 * 
+			 * Define default transition
+			 * 
+			 **/
+			protected function viewnavigatorapplication1_creationCompleteHandler(event:FlexEvent):void {
+				cft.duration = 0;
+				navigator.defaultPushTransition = cft;
+			}
+			
+			/**
+			 * 
+			 * Function to write history (as a dictionary) to the 'Documents' folder of the device
+			 * 
+			 **/
+			public static function writeHistory(d:Dictionary):void {
+				var bytes:ByteArray = new ByteArray();
+				bytes.writeObject(d);
+				
+				var file:File = File.documentsDirectory.resolvePath("appetitthistory");
+				var stream:FileStream = new FileStream()
+				stream.open(file, FileMode.WRITE);
+				stream.writeBytes(bytes, 0, bytes.length);
+				stream.close();
+			}
+			
+			/**
+			 * 
+			 * Function to read history (as a dictionary) from the 'Documents' folder of the device
+			 * 
+			 **/
+			public static function readHistory():Dictionary {
+				var bytes:ByteArray = new ByteArray();
+				
+				var file:File = File.documentsDirectory.resolvePath("appetitthistory");
+				if(file.exists) {
+					var stream:FileStream = new FileStream()
+					stream.open(file, FileMode.READ);
+					stream.readBytes(bytes);
+					stream.close();
+					
+					return bytes.readObject();
+				}
+				else {
+					return null;
+				}
+			}
+		]]>
+	</fx:Script>
+</s:ViewNavigatorApplication>

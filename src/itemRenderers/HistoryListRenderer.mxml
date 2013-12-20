@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:ItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark" width="500" height="100%" xmlns:mx="library://ns.adobe.com/flex/mx" autoDrawBackground="false">
+	
+	<s:VGroup left="10" top="10" bottom="10" right="10" gap="20">
+		<s:Label width="100%" textAlign="center" textDecoration="underline" color="#000000" text="{data.dateLabel}" fontSize="22"/>
+		<s:Spacer height="50" />
+		<s:Label width="100%" textAlign="left" color="#000000" text="{'% food intake: '+(Number(100-data.foodCounter)+Number(data.extraFood*25))}" />
+		<s:Label width="100%" textAlign="left" color="#000000" text="{'% drink intake: '+Number(100-data.drinkCounter)}" />
+		<s:Label width="100%" textAlign="left" color="#000000" text="{'intake: '+data.foodList}" />
+	</s:VGroup>
+</s:ItemRenderer>

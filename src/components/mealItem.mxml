@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+					  xmlns:s="library://ns.adobe.com/flex/spark" creationComplete="initItem(event)">
+	<fx:Declarations>
+		<fx:String id="iconName" />
+		<fx:String id="colorAppetitt1" />
+		<fx:String id="colorAppetitt2" />
+		<fx:String id="colorAppetitt3" />
+		<fx:String id="colorAppetitt4" />
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.events.FlexEvent;
+			
+			public static const DEFAULT_SOCIAL:String = "assets/graphics/1.png";
+			public static const BROWSING_1:String = "assets/graphics/2a.png";
+			public static const CHOSEN_1:String = "assets/graphics/2.png";
+			public static const BROWSING_2:String = "assets/graphics/3a.png";
+			public static const CHOSEN_2:String = "assets/graphics/3.png";
+			public static const BROWSING_3:String = "assets/graphics/4a.png";
+			public static const CHOSEN_3:String = "assets/graphics/4.png";
+			public static const BROWSING_4:String = "assets/graphics/5a.png";
+			public static const CHOSEN_4:String = "assets/graphics/5.png";
+			
+			[Bindable] public var DEFAULT_URL:String;
+			[Bindable] public var ACTIVE_URL:String;
+			[Bindable] public var EATEN_URL:String;
+			[Bindable] public var DRAG_URL:String;
+			
+			[Bindable] public var visibleAppetitt1:Boolean = false;
+			[Bindable] public var visibleAppetitt2:Boolean = false;
+			[Bindable] public var visibleAppetitt3:Boolean = false;
+			[Bindable] public var visibleAppetitt4:Boolean = false;
+			
+			protected function initItem(event:FlexEvent):void {
+				colorAppetitt1 = colorAppetitt2 = colorAppetitt3 = colorAppetitt4 = DEFAULT_SOCIAL;
+				
+				switch(this.id) {
+					case "cold":
+						DEFAULT_URL = "assets/graphics/cold.png";
+						DRAG_URL = "assets/graphics/cold_drag.png";
+						lab.text = "KALD DRIKKE";
+						break;
+					case "hot":
+						DEFAULT_URL = "assets/graphics/hot.png";
+						DRAG_URL = "assets/graphics/hot_drag.png";
+						lab.text = "VARM DRIKKE";
+						break;
+					case "breakfast":
+						DEFAULT_URL = "assets/graphics/breakfast_b.png";
+						ACTIVE_URL = "assets/graphics/breakfast_a.png";
+						DRAG_URL = "assets/graphics/breakfast_drag.png";
+						lab.text = "FROKOST";
+						break;
+					case "snack1":
+						DEFAULT_URL = "assets/graphics/snack1_b.png";
+						ACTIVE_URL = "assets/graphics/snack1_a.png";
+						DRAG_URL = "assets/graphics/snack1_drag.png";
+						lab.text = "MELLOMMÅLTID";
+						break;
+					case "lunch":
+						DEFAULT_URL = "assets/graphics/lunch_b.png";
+						ACTIVE_URL = "assets/graphics/lunch_a.png";
+						DRAG_URL = "assets/graphics/lunch_drag.png";
+						lab.text = "LUNSJ";
+						break;
+					case "dinner":
+						DEFAULT_URL = "assets/graphics/dinner_b.png";
+						ACTIVE_URL = "assets/graphics/dinner_a.png";
+						DRAG_URL = "assets/graphics/dinner_drag.png";
+						lab.text = "MIDDAG";
+						break;
+					case "snack2":
+						DEFAULT_URL = "assets/graphics/snack2_b.png";
+						ACTIVE_URL = "assets/graphics/snack2_a.png";
+						DRAG_URL = "assets/graphics/snack2_drag.png";
+						lab.text = "MELLOMMÅLTID ";
+						break;
+					case "evening":
+						DEFAULT_URL = "assets/graphics/evening_b.png";
+						ACTIVE_URL = "assets/graphics/evening_a.png";
+						DRAG_URL = "assets/graphics/evening_drag.png";
+						lab.text = "KVELDS";
+						break;
+				}
+			}
+			
+			public function updateHistory(arr:Array):void {
+				if(arr != null) {
+					for each (var obj:Object in arr.reverse()) {
+						if(obj.mealtype == this.id.toUpperCase()) {
+							this.currentState = "eaten";
+							
+							if(obj.thumbpath != null) {
+								EATEN_URL = "assets/"+obj.thumbpath;
+							}
+							else {
+								EATEN_URL = "assets/btn/"+this.id+"_btn/0.png";
+							}
+							break;
+						}
+					}
+				}
+			}
+
+			
+			public function set userIndex(ind:Number):void {
+				switch(ind % 4) {
+					case 1:
+						visibleAppetitt1 = true;
+						break;
+					case 2:
+						visibleAppetitt2 = true;
+						break;
+					case 3:
+						visibleAppetitt3 = true;
+						break;
+					case 0:
+						visibleAppetitt4 = true;
+						break;
+				}
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<s:states>
+		<s:State name="default" />
+		<s:State name="water" />
+		<s:State name="active" />
+		<s:State name="activecore" />
+		<s:State name="eaten" />
+	</s:states>
+	
+	<s:HGroup left="5" width="100%" height="100%" gap="0">
+		<s:VGroup excludeFrom="water">
+			<s:Group width="18" height="18">
+				<s:BitmapImage smooth="true" smoothingQuality="high" source="@Embed('assets/graphics/a_circle.png')" visible="{visibleAppetitt1}" />
+				<s:BitmapImage width="14" height="14" source="{colorAppetitt1}" horizontalCenter="0" verticalCenter="0" />
+			</s:Group>
+			<s:Group width="18" height="18">
+				<s:BitmapImage smooth="true" smoothingQuality="high" source="@Embed('assets/graphics/a_circle.png')" visible="{visibleAppetitt2}" />
+				<s:BitmapImage width="14" height="14" source="{colorAppetitt2}" horizontalCenter="0" verticalCenter="0" />
+			</s:Group>
+			<s:Group width="18" height="18">
+				<s:BitmapImage smooth="true" smoothingQuality="high" source="@Embed('assets/graphics/a_circle.png')" visible="{visibleAppetitt3}" />
+				<s:BitmapImage width="14" height="14" source="{colorAppetitt3}" horizontalCenter="0" verticalCenter="0" />
+			</s:Group>
+			<s:Group width="18" height="18">
+				<s:BitmapImage smooth="true" smoothingQuality="high" source="@Embed('assets/graphics/a_circle.png')" visible="{visibleAppetitt4}" />
+				<s:BitmapImage width="14" height="14" source="{colorAppetitt4}" horizontalCenter="0" verticalCenter="0" />
+			</s:Group>
+		</s:VGroup>
+		<s:Spacer width="10" />
+		<s:VGroup gap="0" horizontalAlign="center">
+			<s:BitmapImage smooth="true" smoothingQuality="high" id="defaultPic" excludeFrom="active, activecore, eaten" source="{DEFAULT_URL}" />
+			<s:BitmapImage smooth="true" smoothingQuality="high" id="activePic" excludeFrom="water, default, eaten" source="{ACTIVE_URL}"/>
+			<s:BitmapImage smooth="true" smoothingQuality="high" id="eatenPic" excludeFrom="default, water, active, activecore" source="{EATEN_URL}"/>
+			<s:Label id="lab" color="#666666" textAlign="left" fontFamily="myhelveticabold" fontSize="14" width="100%"/>
+		</s:VGroup>
+	</s:HGroup>
+</s:Group>

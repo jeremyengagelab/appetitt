@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<application xmlns="http://ns.adobe.com/air/application/3.9">
+	<id>no.uio.uv.pappettit</id>
+	<filename>Appetitt</filename>
+	<name>Appetitt</name>
+	<versionNumber>2.0.12</versionNumber>
+	<initialWindow>
+		<content>[This value will be overwritten by Flash Builder in the output app.xml]</content>
+		<aspectRatio>landscape</aspectRatio>
+		<autoOrients>false</autoOrients>
+        <fullScreen>true</fullScreen>
+        <visible>true</visible>
+        <softKeyboardBehavior>none</softKeyboardBehavior>
+    </initialWindow>
+    
+	<!-- The icon the system uses for the application. For at least one resolution,
+	specify the path to a PNG file included in the AIR package. Optional. -->
+	<icon>
+		<image29x29>assets/icons/29.png</image29x29>
+		<image40x40>assets/icons/40.png</image40x40>
+		<image58x58>assets/icons/58.png</image58x58>
+		<image76x76>assets/icons/76.png</image76x76>
+		<image80x80>assets/icons/80.png</image80x80>
+		<image120x120>assets/icons/120.png</image120x120>
+		<image152x152>assets/icons/152.png</image152x152>
+		<image512x512>assets/icons/512.png</image512x512>
+		<image1024x1024>assets/icons/1024.png</image1024x1024>
+	</icon>
+
+    <iPhone>
+        <InfoAdditions><![CDATA[
+			<key>UIDeviceFamily</key>
+			<array>
+				<string>2</string>
+			</array>
+			<key>UIApplicationExitsOnSuspend</key> 
+       		<true/>
+       		<key>UIFileSharingEnabled</key>
+       		<true/>
+		]]></InfoAdditions>
+		<Entitlements>
+            <![CDATA[
+			<key>aps-environment</key>
+			<string>production</string>
+            ]]>
+        </Entitlements> 
+        <requestedDisplayResolution excludeDevices="iPad">high</requestedDisplayResolution>
+    </iPhone>
+
+</application>

@@ -1,0 +1,1539 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark" title="Appetitt" actionBarVisible="false" backgroundColor="#000000" viewActivate="initView(event)" xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:components="components.*" creationPolicy="all">
+	
+	<fx:Script>
+		<![CDATA[
+			import air.net.SocketMonitor;
+			
+			import com.adobe.serialization.json.JSON;
+			import com.seesmic.as3.xmpp.JID;
+			import com.seesmic.as3.xmpp.StreamEvent;
+			import com.seesmic.as3.xmpp.XMPPEvent;
+			
+			import components.draggableMealItem;
+			import components.quarterBlock;
+			
+			import customEvents.DroppedMealEvent;
+			import customEvents.LogActionEvent;
+			import customEvents.UndoButtonEvent;
+			
+			import flash.notifications.NotificationStyle;
+			import flash.notifications.RemoteNotifier;
+			import flash.notifications.RemoteNotifierSubscribeOptions;
+			import flash.utils.clearInterval;
+			import flash.utils.setInterval;
+			
+			import mx.collections.ArrayCollection;
+			
+			import no.uio.uv.engagelab.EngageLabMUC;
+			import no.uio.uv.engagelab.EngageLabXMPP;
+			
+			import spark.events.ViewNavigatorEvent;
+			
+			/**
+			 * 
+			 * Definition of local variables
+			 * 
+			 * 
+			 * */
+			private var nowDate:Date;
+			private var lastDropRecipeDate:Date;
+			private var shouldChangeRecipeDisplay:Boolean = false;
+			private var draggableMeal:draggableMealItem;
+			private var longTapTimer:Number;
+			private var formattedToday:Number;
+			private var history:Dictionary;
+			private var waiterInterval:Number;
+			private var so:SharedObject;
+			private var connection:EngageLabXMPP;
+			private var jsonObject:Object;
+			private var xm:XML;
+			private var roomjid:JID;
+			private var thisUserGroup:Number;
+			private var thisGroupLowLimit:Number;
+			private var thisGroupHighLimit:Number;
+			private var xmppUserGroup:Number;
+			private var areUserInSameGroup:Boolean;
+			
+			private var breakfastIn:Number; 	
+			private var realbreakfastIn:Number; 	
+			private var realbreakfastOut:Number; 	
+			private var breakfastOut:Number; 	
+			private var snack1In:Number;
+			private var realsnack1In:Number;
+			private var realsnack1Out:Number;
+			private var snack1Out:Number;
+			private var lunchIn:Number;
+			private var reallunchIn:Number;
+			private var reallunchOut:Number;
+			private var lunchOut:Number;
+			private var dinnerIn:Number;
+			private var realdinnerIn:Number;
+			private var realdinnerOut:Number;
+			private var dinnerOut:Number;
+			private var snack2In:Number;
+			private var realsnack2In:Number;
+			private var realsnack2Out:Number;
+			private var snack2Out:Number;
+			private var eveningIn:Number;
+			private var realeveningIn:Number;
+			private var realeveningOut:Number;
+			private var eveningOut:Number;
+			private var midnight:Number
+			private var socketMonitor:SocketMonitor;
+			private var isOnline:Boolean = false;
+			private var isUserCurrentlyBrowsing:Boolean;
+			private var recipeAreaInitFadeCounter:Number = 1;
+			private var reinitReceipeArea:Boolean = true;
+			private var hasbrowsedToday:Boolean = false;
+			private var hasReportedToday:Boolean = false;
+			
+			/**
+			 * 
+			 * Definition of public variables
+			 * 
+			 * 
+			 * */
+			public static const IPADS_LIST:ArrayCollection = new ArrayCollection([
+				{label: "none", login:"", ind: 0},
+				{label: "ipad1", login:"appetitt1", ind: 1},
+				{label: "ipad2", login:"appetitt2", ind: 2},
+				{label: "ipad3", login:"appetitt3", ind: 3},
+				{label: "ipad4", login:"appetitt4", ind: 4},
+				{label: "ipad5", login:"appetitt5", ind: 5},
+				{label: "ipad6", login:"appetitt6", ind: 6},
+				{label: "ipad7", login:"appetitt7", ind: 7},
+				{label: "ipad8", login:"appetitt8", ind: 8},
+				{label: "ipad9", login:"appetitt9", ind: 9},
+				{label: "ipad10", login:"appetitt10", ind: 10},
+				{label: "ipad11", login:"appetitt11", ind: 11},
+				{label: "ipad12", login:"appetitt12", ind: 12}]);
+			
+			public static const SHARED_OBJECT:String = "no.uio.uv.appetitt";
+			
+			public static const BREAKFAST:String = "BREAKFAST";
+			public static const SNACK1:String = "SNACK1";
+			public static const LUNCH:String = "LUNCH";
+			public static const DINNER:String = "DINNER";
+			public static const SNACK2:String = "SNACK2";
+			public static const EVENING:String = "EVENING";
+			public static const DRINK:String = "DRINK";
+			
+			private static const CONNECT_TO_SERVER:String = "CONNECT_TO_SERVER";
+			private static const XMPP_SERVER:String = "imediamac19.uio.no";
+			private static const ACTIVITY_ROOM:String = "appetitt";
+			private static const LOG_ROOM:String = "appetittlog";
+			private static const XMPP_PORT:String = "5223";
+			private static const MESSAGE_TYPE_CHAT:String = "MESSAGE_TYPE_CHAT";
+			private static const MESSAGE_TYPE_LOG:String = "MESSAGE_TYPE_LOG";
+			
+			public static const BANNER_BREAKFAST:String = "FROKOST";
+			public static const BANNER_SNACK1:String = "MELLOMMÅLTID";
+			public static const BANNER_LUNCH:String = "LUNSJ";
+			public static const BANNER_DINNER:String = "MIDDAG";
+			public static const BANNER_SNACK2:String = "MELLOMMÅLTID ";
+			public static const BANNER_EVENING:String = "KVELDS";
+			
+			[Bindable] private var nextMealName:String;
+			[Bindable] private var notificationMessage:String;
+			private var subscribeOptions:RemoteNotifierSubscribeOptions;
+			private var remoteNot:RemoteNotifier;
+			private var preferredStyles:Vector.<String>;
+			private var urlreq:URLRequest;
+			private var urlLoad:URLLoader = new URLLoader();
+			private var urlString:String;
+			
+			[Bindable] private var percentLoaded:Number = 0;
+			
+			protected function initView(event:ViewNavigatorEvent):void {
+				//load local username
+				so = SharedObject.getLocal(SHARED_OBJECT);
+				/*so.clear();
+				so.flush();*/
+				
+				//check if the ipad as an XMPP username assigned
+				if(so.data.xmmppname == null) {
+					//if not go to settings
+					navigator.pushView(settings, null, null, null);
+				}
+				else {
+					Multitouch.inputMode = MultitouchInputMode.TOUCH_POINT;
+					//find out local user group dynamically to be used by the social component
+					thisUserGroup = Math.floor((Number((so.data.xmmppname.login as String).substr(8))-1)/4);
+					thisGroupLowLimit = 1 + (4*thisUserGroup);
+					thisGroupHighLimit = 4*(thisUserGroup+1);					
+					
+					//initiate default listeners
+					this.addEventListener(CONNECT_TO_SERVER, connectToServer);
+					this.addEventListener(DroppedMealEvent.MEAL_DROP_OK_EVENT, sendSocial);
+					this.addEventListener(LogActionEvent.LOG_ACTION, logAction);
+					this.addEventListener(UndoButtonEvent.UNDO_BUTTON_EVENT, handleUndoButton);
+					//this.addEventListener(MouseEvent.RELEASE_OUTSIDE, handleMouseReleaseOutside);
+					this.addEventListener(TouchEvent.TOUCH_END, handleTouchEnd);
+					
+					//initiate notification service
+					subscribeOptions = new RemoteNotifierSubscribeOptions();
+					remoteNot = new RemoteNotifier();
+					preferredStyles = new Vector.<String>();
+					
+					preferredStyles.push(NotificationStyle.ALERT ,NotificationStyle.BADGE,NotificationStyle.SOUND );
+					
+					subscribeOptions.notificationStyles = preferredStyles;
+					
+					remoteNot.addEventListener(RemoteNotificationEvent.TOKEN,tokenHandler);
+					remoteNot.addEventListener(RemoteNotificationEvent.NOTIFICATION,notificationHandler);
+					remoteNot.addEventListener(StatusEvent.STATUS,statusHandler);
+					remoteNot.subscribe(subscribeOptions);
+	
+					//define today's date
+					var today:Date = new Date();
+					//create the meal times
+					resetMealTimes(today);
+					resetSocialHeads();
+					//store today's date as YYYYMMDD
+					formattedToday = Number(todayFormatter.format(today));
+					
+					
+					//get history dictionary
+					history = appetitt.readHistory();
+					
+					//check if history exists
+					if(history != null) {
+						
+						//set todays values if any
+						if(history[formattedToday] != null) {
+							bodyArea.setTodaysCounter(history[formattedToday].foodCounter, history[formattedToday].drinkCounter, history[formattedToday].extraFood, history);
+							
+							var mi:mealItem;
+							for (var j:int = 0; j < mealItemGroup.numElements; j++) {
+								mi = mealItemGroup.getElementAt(j) as mealItem;
+								mi.updateHistory(history[formattedToday].mealtypeList);
+							}
+							
+							if((history[formattedToday].mealtypeList as Array).length > 0) {
+								hasReportedToday = true;
+								messageLastMealDrop = getCorrectMealName((history[formattedToday].mealtypeList as Array)[(history[formattedToday].mealtypeList as Array).length-1].mealtype);
+							}
+						}
+						else {
+							//if not start from scratch
+							bodyArea.setTodaysCounter(100, 100, 0, history);
+						}
+					}
+					else {
+						//no history available, then create one
+						history = new Dictionary();
+						bodyArea.setTodaysCounter(100, 100, 0, history);			
+					}
+					
+					onTick();
+					//start a 30s interval to refresh the UI
+					setInterval(onTick, 30000);
+					
+					//check whether the XMPP server is available (network?)
+					socketMonitor = new SocketMonitor(XMPP_SERVER, Number(XMPP_PORT)); 
+					socketMonitor.addEventListener(StatusEvent.STATUS, socketStatusChange); 
+					socketMonitor.start();
+				}
+			}
+			
+			protected function getCorrectMealName(typeName:String):String {
+				if(typeName == BREAKFAST) {
+					return BANNER_BREAKFAST;
+				}
+				else if(typeName == SNACK1) {
+					return BANNER_SNACK1;
+				}
+				else if(typeName == LUNCH) {
+					return BANNER_LUNCH;
+				}
+				else if(typeName == DINNER) {
+					return BANNER_DINNER;
+				}
+				else if(typeName == SNACK2) {
+					return BANNER_SNACK2;
+				}
+				else if(typeName == EVENING) {
+					return BANNER_EVENING;
+				}
+				else {
+					return "";
+				}
+			}
+			
+			/**
+			 * 
+			 * Handle all notifications from the notification service
+			 * 
+			 * 
+			 **/
+			protected function notificationHandler(e:RemoteNotificationEvent):void{
+				var vv:String = (e.data.aps as String).replace(/[\u000d\u000a\u0008\u007B\u007D\u003B]+/g,""); 
+				var messArray:Array = vv.split("=");
+				notificationMessage = ((messArray[1] as String).replace(/\\U00e5+/g, "å")).replace("sound", "");
+				notifyerSequence.play();
+			}
+			
+			
+			/**
+			 * 
+			 * Handle all statuses from the notification service
+			 * 
+			 * 
+			 **/
+			protected function statusHandler(e:StatusEvent):void{
+				trace("\n statusHandler");
+				trace("event Level" + e.level +"\nevent code " + e.code + "\ne.currentTarget: " + e.currentTarget.toString());
+			}
+			
+			/**
+			 * 
+			 * Handle the token from the notification service
+			 * 
+			 * 
+			 **/
+			protected function tokenHandler(e:RemoteNotificationEvent):void {
+				urlString = new String("https://go.urbanairship.com/api/device_tokens/" + e.tokenId);
+				urlreq = new URLRequest(urlString);
+				
+				urlreq.authenticate = true;
+				urlreq.method = URLRequestMethod.PUT;
+				
+				URLRequestDefaults.setLoginCredentialsForHost("go.urbanairship.com","YsP0chDEQlOPVdhgnIJkgg","xBXQdKriS6eqV59dLUEOrA");
+				
+				urlLoad.addEventListener(IOErrorEvent.IO_ERROR,iohandler);
+				urlLoad.addEventListener(Event.COMPLETE,compHandler);
+				urlLoad.addEventListener(HTTPStatusEvent.HTTP_STATUS,httpHandler);
+				urlLoad.load(urlreq);
+				
+			}
+			
+			protected function iohandler(e:IOErrorEvent):void {
+				trace("\n In IOError handler" + e.errorID +" " +e.type);	
+			}
+			
+			protected function compHandler(e:Event):void{
+				trace("\n In Complete handler,"+"status: " +e.type + "\n");
+			}
+			
+			protected function httpHandler(e:HTTPStatusEvent):void{
+				trace("\n in httpstatus handler,"+ "Status: " + e.status);
+			}
+			
+			/**
+			 * 
+			 * 
+			 * Function to check if the network is available
+			 * 
+			 **/
+			protected function socketStatusChange(e:StatusEvent):void { 
+				//if the scocket is available
+				if(socketMonitor.available) {
+					//connect to XMPP
+					dispatchEvent(new Event(CONNECT_TO_SERVER, true));
+				}
+				else {
+					//hide the waiter screen and work offline
+					percentLoaded = 1500;
+					waiter.visible = false;
+				}
+				
+				//remove unnecessary listener
+				socketMonitor.removeEventListener(StatusEvent.STATUS, socketStatusChange); 
+				socketMonitor.stop(); 
+			}
+			
+			protected function getNorwegianDayFormat(d:String):String {
+				var dd:String = d;
+				
+				switch(d) {
+					case "MONDAY":
+						dd = "MANDAG";
+						break;
+					case "TUESDAY":
+						dd = "TIRSDAG";
+						break;
+					case "WEDNESDAY":
+						dd = "ONSDAG";
+						break;
+					case "THURSDAY":
+						dd = "TORSDAG";
+						break;
+					case "FRIDAY":
+						dd = "FREDAG";
+						break;
+					case "SATURDAY":
+						dd = "LØRDAG";
+						break;
+					case "SUNDAY":
+						dd = "SØNDAG";
+						break;
+				}
+				
+				return dd;
+			}
+			
+			protected function getNorwegianMonthFormat(d:String, m:String):String {
+				var mm:String = m;
+				
+				switch(m) {
+					case "JANUARY":
+						mm = "JANUAR";
+						break;
+					case "FEBRUARY":
+						mm = "FEBRUAR";
+						break;
+					case "MARCH":
+						mm = "MARS";
+						break;
+					case "MAY":
+						mm = "MAI";
+						break;
+					case "JUNE":
+						mm = "JUNI";
+						break;
+					case "JULY":
+						mm = "JULI";
+						break;
+					case "OCTOBER":
+						mm = "OKTOBER";
+						break;
+					case "DECEMBER":
+						mm = "DESEMBER";
+						break;
+				}
+				
+				return d+" "+mm;
+			}
+			
+			protected function onTick():void {
+				trace("tick");
+				//create a new date
+				nowDate = new Date();
+				
+				//set the banner text based on this new date and some formatters
+				clock.text = timeFormatter.format(nowDate);
+				dayo.text = getNorwegianDayFormat((dayoFormatter.format(nowDate)).toUpperCase());
+				dato.text = getNorwegianMonthFormat((datoFormatter.format(nowDate)).toUpperCase(), (monthFormatter.format(nowDate)).toUpperCase());
+				
+				if(formattedToday != Number(todayFormatter.format(nowDate))) {
+					resetMealTimes(nowDate);
+					resetSocialHeads();
+					history = appetitt.readHistory();
+					bodyArea.setTodaysCounter(100, 100, 0, history);
+					formattedToday = Number(todayFormatter.format(nowDate));
+				}
+				
+				
+				//get now's meal name
+				nextMealName = getMealBasedOnTime(nowDate);
+				
+				//little logic to fix the 15 mins grey scale behind the menu
+				if(nowDate.time > breakfastIn && nowDate.time <= eveningOut) {
+					var diff:Number = Math.floor((nowDate.time - breakfastIn)/900000);
+					timeprogress.removeAllElements();
+					var qb:quarterBlock;
+					for (var i:int = 0; i < diff; i++) {
+						qb = new quarterBlock();
+						timeprogress.addElement(qb);
+					}
+				}
+				else {
+					timeprogress.removeAllElements();
+				}
+				
+				//check if the current banner text is different than a banner text with the new date and that the last browse occured more than 10 mins ago
+				if(mealTitle.text != nextMealName && !shouldChangeRecipeDisplay) {
+					//we want to change the receipe area
+					shouldChangeRecipeDisplay = true;	
+					isUserCurrentlyBrowsing = false;
+				}
+				
+				//if we want to update recipe area and the last browse is more than 10 mins ago
+				if(shouldChangeRecipeDisplay && getTimeDiffLastRecipe(nowDate) && !isUserCurrentlyBrowsing) {
+					//set recipe are to default
+					recipeArea.recipeImage.removeEventListener(MouseEvent.MOUSE_DOWN, dragRec);
+					recipeArea.currentState = "default";
+					recipeArea.dishName = "";
+					shouldChangeRecipeDisplay = false;	
+				}
+				
+				//little logic to reinit the recipe area after 1 minute if no browsing
+				if(reinitReceipeArea) {
+					recipeAreaInitFadeCounter++;
+					if(recipeAreaInitFadeCounter == 2) {
+						recipeArea.recipeImage.removeEventListener(MouseEvent.MOUSE_DOWN, dragRec);
+						trace("one minute, let's init the recipe area");
+						recipeArea.currentState = "default";
+						if(messageLastMealDrop != null) {
+							if(messageLastMealDrop == nextMealName) {
+								recipeArea.labTitle.visible = false;
+								recipeArea.messBdy = "Takk for at du rapporterte "+messageLastMealDrop.toLowerCase()+". Dra er måltid hit for å se forslag på retter og oppskrifter";	
+							}
+							else {
+								recipeArea.labTitle.visible = true;
+								recipeArea.messTitle = "God "+dayPeriod+"."
+								recipeArea.messBdy = "Takk for at du har rapportert "+messageLastMealDrop.toLowerCase()+". Nå er det tid for "+nextMealName.toLowerCase()+". Dra er måltid hit for å se forslag på retter og oppskrifter";
+							}
+						}
+						else {
+							recipeArea.labTitle.visible = true;
+							recipeArea.messTitle = "God "+dayPeriod+"."
+							recipeArea.messBdy = "Nå er det tid for "+nextMealName.toLowerCase()+". Dra er måltid hit for å se forslag på retter og oppskrifter";
+						}
+						
+						//user has browsed but not chosen
+						if(hasbrowsedToday && !hasReportedToday) {
+							recipeArea.labTitle.visible = false;
+							recipeArea.messBdy = "Dra måltid over i figuren til høyre for å rapportere det du har spist";	
+						}
+						
+						messageLastMealDrop = null;
+					}
+				}
+				
+				
+				//set the banner's meal name
+				mealTitle.text = nextMealName;
+			}
+			
+			private var dragSourceRecipeArea:Boolean = false;
+			protected function dragRec(evt:TouchEvent):void {
+				
+				dragSourceRecipeArea = true;
+				draggerHolder.visible = true;
+				draggerHolder.removeAllElements();
+				draggableMeal = new draggableMealItem();
+				draggableMeal.shouldDelay = true;
+				
+				switch(recipeArea.newMealType) {
+					case BREAKFAST:
+						draggableMeal.iconName = "food.png";
+						draggableMeal.mealType = "breakfast";
+						draggableMeal.imagePath = "assets/graphics/breakfast_drag.png";
+						break;
+					case SNACK1:
+						draggableMeal.iconName = "food1.png";
+						draggableMeal.mealType = "snack1";
+						draggableMeal.imagePath = "assets/graphics/snack1_drag.png";
+						break;
+					case LUNCH:
+						draggableMeal.iconName = "food2.png";
+						draggableMeal.mealType = "lunch";
+						draggableMeal.imagePath = "assets/graphics/lunch_drag.png";
+						break;
+					case DINNER:
+						draggableMeal.iconName = "food3.png";
+						draggableMeal.mealType = "dinner";
+						draggableMeal.imagePath = "assets/graphics/dinner_drag.png";
+						break;
+					case SNACK2:
+						draggableMeal.iconName = "food4.png";
+						draggableMeal.mealType = "snack2";
+						draggableMeal.imagePath = "assets/graphics/snack2_drag.png";
+						break;
+					case EVENING:
+						draggableMeal.iconName = "food5.png";
+						draggableMeal.mealType = "evening";
+						draggableMeal.imagePath = "assets/graphics/evening_drag.png";
+						break;
+				}
+				
+				draggableMeal.thumbPath = recipeArea.currentThumb;
+				
+				var p:Point = new Point(evt.stageX, evt.stageY);
+				p = this.globalToLocal(p);
+				draggableMeal.x = p.x - 50;
+				draggableMeal.y = p.y - 50;
+				draggableMeal.addEventListener(TouchEvent.TOUCH_END, handleMouseUp);
+				draggerHolder.addElement(draggableMeal);
+				
+				var lae:LogActionEvent = new LogActionEvent(LogActionEvent.LOG_ACTION, true);
+				lae.action = LogActionEvent.START_DRAG + " - " + draggableMeal.mealType;
+				dispatchEvent(lae);
+
+				draggableMeal.startDrag(false, new Rectangle(0, 0, navigator.width, navigator.height));
+			}
+						
+			/**
+			 * 
+			 * 
+			 * Function to calculate if last interaction is more than 10 mins ago
+			 * 
+			 **/
+			protected function getTimeDiffLastRecipe(newdate:Date):Boolean {
+				if(newdate != null && lastDropRecipeDate != null) {
+					var millisecondDifference:int = newdate.valueOf() - lastDropRecipeDate.valueOf();
+					var seconds:int = millisecondDifference / 1000;
+					if(seconds > 600) {
+						return true;
+					}
+					else {
+						return false;
+					}
+				}
+				else {
+					return true;
+				}
+			}
+			
+			/**
+			 * 
+			 * Function to reset mealtimes (in/out) based on new date
+			 * Mealtimes will be stored as dates
+			 * 
+			 **/
+			protected function resetMealTimes(d:Date):void {
+				breakfastIn = new Date(d.fullYearUTC, d.monthUTC, d.dateUTC, 7, 0, 0).time; 	
+				realbreakfastIn = new Date(d.fullYearUTC, d.monthUTC, d.dateUTC, 8, 0, 0).time; 	
+				realbreakfastOut = new Date(d.fullYearUTC, d.monthUTC, d.dateUTC, 9, 0, 0).time; 	
+				breakfastOut = new Date(d.fullYearUTC, d.monthUTC, d.dateUTC, 10, 0, 0).time; 	
+				
+				snack1In = new Date(d.fullYearUTC, d.monthUTC, d.dateUTC, 10, 0, 0).time;
+				realsnack1In = new Date(d.fullYearUTC, d.monthUTC, d.dateUTC, 10, 30, 0).time;
+				realsnack1Out = new Date(d.fullYearUTC, d.monthUTC, d.dateUTC, 11, 0, 0).time;
+				snack1Out = new Date(d.fullYearUTC, d.monthUTC, d.dateUTC, 11, 30, 0).time;
+				
+				lunchIn = new Date(d.fullYearUTC, d.monthUTC, d.dateUTC, 11, 30, 0).time;
+				reallunchIn = new Date(d.fullYearUTC, d.monthUTC, d.dateUTC, 12, 0, 0).time;
+				reallunchOut = new Date(d.fullYearUTC, d.monthUTC, d.dateUTC, 13, 0, 0).time;
+				lunchOut = new Date(d.fullYearUTC, d.monthUTC, d.dateUTC, 14, 0, 0).time;
+				
+				dinnerIn = new Date(d.fullYearUTC, d.monthUTC, d.dateUTC, 14, 0, 0).time;
+				realdinnerIn = new Date(d.fullYearUTC, d.monthUTC, d.dateUTC, 15, 0, 0).time;
+				realdinnerOut = new Date(d.fullYearUTC, d.monthUTC, d.dateUTC, 16, 0, 0).time;
+				dinnerOut = new Date(d.fullYearUTC, d.monthUTC, d.dateUTC, 17, 0, 0).time;
+				
+				snack2In = new Date(d.fullYearUTC, d.monthUTC, d.dateUTC, 17, 0, 0).time;
+				realsnack2In = new Date(d.fullYearUTC, d.monthUTC, d.dateUTC, 17, 30, 0).time;
+				realsnack2Out = new Date(d.fullYearUTC, d.monthUTC, d.dateUTC, 18, 30, 0).time;
+				snack2Out = new Date(d.fullYearUTC, d.monthUTC, d.dateUTC, 19, 0, 0).time;
+				
+				eveningIn = new Date(d.fullYearUTC, d.monthUTC, d.dateUTC, 19, 0, 0).time;
+				realeveningIn = new Date(d.fullYearUTC, d.monthUTC, d.dateUTC, 19, 30, 0).time;
+				realeveningOut = new Date(d.fullYearUTC, d.monthUTC, d.dateUTC, 20, 30, 0).time;
+				eveningOut = new Date(d.fullYearUTC, d.monthUTC, d.dateUTC, 23, 0, 0).time;
+				
+				midnight = new Date(d.fullYearUTC, d.monthUTC, d.dateUTC, 23, 59, 59).time;
+			}
+			
+			/**
+			 * 
+			 * Function to return the meal name based on time of the day
+			 * 
+			 **/
+			protected function getMealBasedOnTime(d:Date):String {
+				
+				if(d.time < breakfastOut) {
+					if(d.time >= realbreakfastIn && d.time < realbreakfastOut) {
+						setMealItemState("activecore", "default", "default", "default", "default", "default");
+					}
+					else {
+						setMealItemState("active", "default", "default", "default", "default", "default");
+					}
+					dayPeriod = "morgen";
+					return BANNER_BREAKFAST;
+				}
+				else if(d.time < snack1Out) {
+					if(d.time >= realsnack1In && d.time < realsnack1Out) {
+						//setMealItemState("chosen", "activecore", "default", "default", "default", "default");
+						setMealItemState("default", "activecore", "default", "default", "default", "default");
+					}
+					else {
+						//setMealItemState("chosen", "active", "default", "default", "default", "default");
+						setMealItemState("default", "active", "default", "default", "default", "default");
+					}
+					dayPeriod = "formiddag";
+					return BANNER_SNACK1;
+				}
+				else if(d.time < lunchOut) {
+					if(d.time >= reallunchIn && d.time < reallunchOut) {
+						//setMealItemState("chosen", "chosen", "activecore", "default", "default", "default");
+						setMealItemState("default", "default", "activecore", "default", "default", "default");
+					}
+					else {
+						//setMealItemState("chosen", "chosen", "active", "default", "default", "default");
+						setMealItemState("default", "default", "active", "default", "default", "default");
+					}
+					dayPeriod = "dag";
+					return BANNER_LUNCH;
+				}
+				else if(d.time < dinnerOut) {
+					if(d.time >= realdinnerIn && d.time < realdinnerOut) {
+						//setMealItemState("chosen", "chosen", "chosen", "activecore", "default", "default");
+						setMealItemState("default", "default", "default", "activecore", "default", "default");
+					}
+					else {
+						//setMealItemState("chosen", "chosen", "chosen", "active", "default", "default");
+						setMealItemState("default", "default", "default", "active", "default", "default");
+					}
+					dayPeriod = "dag";
+					return BANNER_DINNER;
+				}
+				else if(d.time < snack2Out) {
+					if(d.time >= realsnack2In && d.time < realsnack2Out) {
+						//setMealItemState("chosen", "chosen", "chosen", "chosen", "activecore", "default");
+						setMealItemState("default", "default", "default", "default", "activecore", "default");
+					}
+					else {
+						//setMealItemState("chosen", "chosen", "chosen", "chosen", "active", "default");
+						setMealItemState("default", "default", "default", "default", "active", "default");
+					}
+					dayPeriod = "ettermiddag";
+					return BANNER_SNACK2;
+				}
+				else if(d.time < eveningOut) {
+					if(d.time >= realeveningIn && d.time < realeveningOut) {
+						//setMealItemState("chosen", "chosen", "chosen", "chosen", "chosen", "activecore");
+						setMealItemState("default", "default", "default", "default", "default", "activecore");
+					}
+					else {
+						//setMealItemState("chosen", "chosen", "chosen", "chosen", "chosen", "active");
+						setMealItemState("default", "default", "default", "default", "default", "active");
+					}
+					dayPeriod = "kveld";
+					return BANNER_EVENING;
+				}
+				else if(d.time < midnight) {
+					//setMealItemState("chosen", "chosen", "chosen", "chosen", "chosen", "chosen");
+					setMealItemState("default", "default", "default", "default", "default", "default");
+					//need to differentiate the evening title '  ' from the breakfast one ' '
+					dayPeriod = "kveld";
+					return "  ";
+				}
+				else {
+					//setMealItemState("default", "default", "default", "default", "default", "default", true);
+					setMealItemState("default", "default", "default", "default", "default", "default", true);
+					//need to differentiate the evening title '  ' from the breakfast one ' '
+					dayPeriod = "morgen";
+					return " ";
+				}				
+			}
+			
+			/**
+			 * 
+			 * Function to set the current state of the menu buttons
+			 * 
+			 **/
+			private function setMealItemState(breakfastState:String, snack1State:String, lunchState:String, dinnerState:String, snack2State:String, eveningState:String, forceUpdate:Boolean = false):void {
+				if(breakfast.currentState == "eaten" && !forceUpdate) {
+					//do nothing
+				}
+				else {
+					breakfast.currentState = breakfastState;					
+				}
+				
+				if(!forceUpdate && snack1.currentState == "eaten") {
+					//do nothing
+				}
+				else {
+					snack1.currentState = snack1State;
+				}
+				
+				if(!forceUpdate && lunch.currentState == "eaten") {
+					//do nothing
+				}
+				else {
+					lunch.currentState = lunchState;
+				}
+				
+				if(!forceUpdate && dinner.currentState == "eaten") {
+					//do nothing
+				}
+				else {
+					dinner.currentState = dinnerState;
+				}
+				
+				if(!forceUpdate && snack2.currentState == "eaten") {
+					//do nothing
+				}
+				else {
+					snack2.currentState = snack2State;
+				}
+				
+				if(!forceUpdate && evening.currentState == "eaten") {
+					//do nothing
+				}
+				else {
+					evening.currentState = eveningState;
+				}
+			}
+			
+			protected function showSettings():void {
+				navigator.pushView(settings, logArray, null, null);
+			}
+			
+			protected function dragMe(event:TouchEvent):void {
+				dragSourceRecipeArea = false;
+				draggerHolder.visible = true;
+				draggerHolder.removeAllElements();
+				
+				draggableMeal = new draggableMealItem();
+				draggableMeal.iconName = (event.currentTarget as mealItem).iconName;
+				draggableMeal.mealType = (event.currentTarget as mealItem).id;
+				draggableMeal.imagePath = (event.currentTarget as mealItem).DRAG_URL;
+				if(draggableMeal.mealType.toUpperCase() == recipeArea.newMealType) {
+					draggableMeal.thumbPath = recipeArea.currentThumb;
+				}
+				else {
+					draggableMeal.thumbPath = null;
+				}
+				
+				var p:Point = new Point(event.stageX, event.stageY);
+				p = this.globalToLocal(p);
+				draggableMeal.x = p.x - 50;
+				draggableMeal.y = p.y - 50;
+				draggableMeal.addEventListener(TouchEvent.TOUCH_END, handleMouseUp);
+				draggableMeal.startDrag(false, new Rectangle(0, 0, navigator.width, navigator.height));
+				draggerHolder.addElement(draggableMeal);
+				
+				var lae:LogActionEvent = new LogActionEvent(LogActionEvent.LOG_ACTION, true);
+				lae.action = LogActionEvent.START_DRAG + " - " + draggableMeal.mealType;
+				dispatchEvent(lae);
+			}
+			
+			protected function handleMouseReleaseOutside(event:MouseEvent):void {
+				draggerHolder.visible = false;
+			}
+			
+			protected function handleTouchEnd(event:TouchEvent):void {
+				draggerHolder.visible = false;
+			}
+			
+			protected function handleMouseUp(event:TouchEvent):void {
+				event.stopImmediatePropagation();
+				draggerHolder.visible = false;
+				
+				var p:Point = new Point(event.stageX, event.stageY);
+				p = this.globalToLocal(p);
+				var objects:Array = this.getObjectsUnderPoint(p);
+				
+				var lae:LogActionEvent = new LogActionEvent(LogActionEvent.LOG_ACTION, true);
+				var hitKnowZone:Boolean = false;
+				
+				for each (var o:DisplayObject in objects) {
+					
+					if((o.toString()).indexOf("recipeArea") > -1 && dragSourceRecipeArea) {
+						recipeArea.loopThroughMealType();
+						lae.action = LogActionEvent.STOP_DRAG + " - recipeArea";
+						dispatchEvent(lae);
+						hitKnowZone = true;
+						break;
+					}
+					else if((o.toString()).indexOf("recipeArea") > -1 && (event.currentTarget as draggableMealItem).mealType != "cold" && (event.currentTarget as draggableMealItem).mealType != "hot" && !dragSourceRecipeArea) {
+						switch((event.currentTarget as draggableMealItem).mealType) {
+							case "breakfast":
+								recipeArea.currentState = "graphic";
+								recipeArea.showMealType(BREAKFAST);
+								//recipeArea.recipeImage.addEventListener(MouseEvent.MOUSE_DOWN, dragRec);
+								break;	
+							case "snack1":
+								recipeArea.currentState = "graphic";
+								recipeArea.showMealType(SNACK1);
+								//recipeArea.recipeImage.addEventListener(MouseEvent.MOUSE_DOWN, dragRec);
+								break;
+							case "lunch":
+								recipeArea.currentState = "graphic";
+								recipeArea.showMealType(LUNCH);
+								//recipeArea.recipeImage.addEventListener(MouseEvent.MOUSE_DOWN, dragRec);
+								break;	
+							case "dinner":
+								recipeArea.currentState = "graphic";
+								recipeArea.showMealType(DINNER);
+								//recipeArea.recipeImage.addEventListener(MouseEvent.MOUSE_DOWN, dragRec);
+								break;	
+							case "snack2":
+								recipeArea.currentState = "graphic";
+								recipeArea.showMealType(SNACK2);
+								//recipeArea.recipeImage.addEventListener(MouseEvent.MOUSE_DOWN, dragRec);
+								break;	
+							case "evening":
+								recipeArea.currentState = "graphic";
+								recipeArea.showMealType(EVENING);
+								//recipeArea.recipeImage.addEventListener(MouseEvent.MOUSE_DOWN, dragRec);
+								//recipeArea.recipeImage.addEventListener(TouchEvent.TOUCH_BEGIN, dragRec);
+								break;	
+						}
+						
+						recipeArea.recipeImage.addEventListener(TouchEvent.TOUCH_BEGIN, dragRec);
+						
+						var dme:DroppedMealEvent = new DroppedMealEvent(DroppedMealEvent.MEAL_DROP_OK_EVENT, true);
+						dme.mealType = ((event.currentTarget as draggableMealItem).mealType).toLowerCase();
+						dme.hasEaten = false;
+						dispatchEvent(dme);
+						
+						lastDropRecipeDate = new Date();
+						shouldChangeRecipeDisplay = false;
+						isUserCurrentlyBrowsing = true;
+						
+						hitKnowZone = true;
+						reinitReceipeArea = false;
+						break;
+					}
+					else if((o.toString()).indexOf("bodyArea") > -1) {
+						
+						scaleMan.play();
+						
+						switch((event.currentTarget as draggableMealItem).mealType) {
+							case "breakfast":
+								messageLastMealDrop = BANNER_BREAKFAST;
+								bodyArea.countMealType(BREAKFAST, formattedToday, recipeArea.dishName, recipeArea.newMealType, (event.currentTarget as draggableMealItem));
+								break;
+							case "snack1":
+								messageLastMealDrop = BANNER_SNACK1;
+								bodyArea.countMealType(SNACK1, formattedToday, recipeArea.dishName, recipeArea.newMealType, (event.currentTarget as draggableMealItem));
+								break;
+							case "lunch":
+								messageLastMealDrop = BANNER_LUNCH;
+								bodyArea.countMealType(LUNCH, formattedToday, recipeArea.dishName, recipeArea.newMealType, (event.currentTarget as draggableMealItem));
+								break;
+							case "dinner":
+								messageLastMealDrop = BANNER_DINNER;
+								bodyArea.countMealType(DINNER, formattedToday, recipeArea.dishName, recipeArea.newMealType, (event.currentTarget as draggableMealItem));
+								break;
+							case "snack2":
+								messageLastMealDrop = BANNER_SNACK2;
+								bodyArea.countMealType(SNACK2, formattedToday, recipeArea.dishName, recipeArea.newMealType, (event.currentTarget as draggableMealItem));
+								break;
+							case "evening":
+								messageLastMealDrop = BANNER_EVENING;
+								bodyArea.countMealType(EVENING, formattedToday, recipeArea.dishName, recipeArea.newMealType, (event.currentTarget as draggableMealItem));
+								break;
+							case "cold":
+								bodyArea.countMealType(DRINK, formattedToday, "cold drink", "", null);
+								break;
+							case "hot":
+								bodyArea.countMealType(DRINK, formattedToday, "hot drink", "", null);
+								break;
+						}
+						
+						lae.action = LogActionEvent.STOP_DRAG + " - bodyArea";
+						dispatchEvent(lae);
+						hitKnowZone = true;
+						
+						reinitReceipeArea = true;
+						recipeAreaInitFadeCounter = 0;
+						break;
+					}
+				}
+				
+				if(!hitKnowZone) {
+					lae.action = LogActionEvent.STOP_DRAG;
+					dispatchEvent(lae);
+				}
+				
+				draggerHolder.visible = false;
+			}
+			
+			/**
+			 *
+			 * Event handling method for CONNECT_TO_SERVER
+			 * 
+			 **/
+			protected function connectToServer(evt:Event):void {
+				if(connection != null) {
+					connection.disconnect();
+					connection = null;
+				}
+				
+				if(so.data.xmmppname != null) {
+					instantiateConnection(so.data.xmmppname.login, XMPP_SERVER, "appetitt", XMPP_PORT);
+				}
+			}
+			
+			private function instantiateConnection(username:String, server:String, password:String, port:String):void {
+				if(username.length > 0 && server.length > 0  && password.length > 0 && port.length > 0) {
+					connection = new EngageLabXMPP();
+					connection.auto_reconnect = true;
+					connection.setJID(username+"@"+server);
+					connection.setPassword(password);
+					connection.setup(server, new uint(port)); 
+					connection.setServer(server);
+					connection.addEventListener(XMPPEvent.SESSION, handleSession);
+					connection.addEventListener(XMPPEvent.AUTH_FAILED, handleAuthFailed);
+					connection.addEventListener(XMPPEvent.PRESENCE_ERROR, handlePresenceError);
+					connection.socket.addEventListener(StreamEvent.CONNECT_FAILED, handleConnectFailed);
+					connection.addPlugin(new EngageLabMUC());
+					connection.connect();
+				}
+				else {
+					connection = null;
+					trace("the social component is disabled");
+				}
+			}
+			
+			/**
+			 *
+			 * Event handling method for StreamEvent.CONNECT_FAILED
+			 * 
+			 **/
+			protected function handleConnectFailed(e:StreamEvent):void {
+				if(connection != null) {
+					connection.auto_reconnect = false;
+				}
+				//connection.disconnect();
+				connection = null;
+				trace("nooooooo connection");
+				isOnline = false;
+				resetSocialHeads();
+			}
+			
+			/**
+			 *
+			 * Event handling method for XMPP PRESENCE_ERROR
+			 * 
+			 **/
+			protected function handlePresenceError(e:XMPPEvent):void {
+				connection.auto_reconnect = false;
+				//connection.disconnect();
+				connection = null;
+				isOnline = false;
+			}
+			
+			/**
+			 *
+			 * Event handling method for XMPP AUTH_FAILED
+			 * 
+			 **/
+			protected final function handleAuthFailed(e:XMPPEvent):void {
+				connection.auto_reconnect = false;
+				//connection.disconnect();
+				connection = null;
+				isOnline = false;
+			}
+			
+			/**
+			 *
+			 * Event handling method for XMPP session
+			 * 
+			 **/
+			protected final function handleSession(e:XMPPEvent):void {
+				connection.sendPresence();
+				connection.addEventListener(XMPPEvent.MESSAGE_MUC, handleMUCMessage);
+				connection.plugin['muc'].joinRoom('appetittmain.'+XMPP_SERVER, ACTIVITY_ROOM , so.data.xmmppname.login);
+				logArray = new ArrayCollection();
+				connection.plugin['muc'].joinRoom('appetittdata.'+XMPP_SERVER, LOG_ROOM , so.data.xmmppname.login);
+				waiterInterval = setInterval(hideWaiter, 4000);
+				isOnline = true;
+			}
+			
+			private function hideWaiter():void {
+				clearInterval(waiterInterval);
+				waiter.visible = false;
+				
+				if(hasbrowsedToday && !hasReportedToday) {
+					recipeArea.labTitle.visible = false;
+					recipeArea.messBdy = "Dra måltid over i figuren til høyre for å rapportere det du har spist";	
+				}
+			}
+			
+			/**
+			 * 
+			 * Event handling method for MUCMessages
+			 * 
+			 **/
+			protected function handleMUCMessage(evt:XMPPEvent):void {
+				if(waiter.visible) {
+					percentLoaded++;
+					clearInterval(waiterInterval);
+					waiterInterval = setInterval(hideWaiter, 4000);
+				}
+				
+				if(!evt.stanza.body) {
+					return;
+				}
+				
+				jsonObject = null;
+				
+				//parse the XMPP message
+				xm = evt.stanza.xml as XML;
+				//var isOldMessage:Boolean = false;
+				for each (var i:XML in xm.elements()) {
+					//check if old message
+					if(i.name() == "urn:xmpp:delay::delay") {
+						//isOldMessage = true;
+					}
+					//retrieve the <engagelab> which contains some JSON
+					if(i.localName() == "engagelab") {
+						jsonObject =  com.adobe.serialization.json.JSON.decode(String(i.text()));
+					}
+				}
+				
+				roomjid = JID(evt.stanza.from);
+				xmppUserGroup = -1;
+				areUserInSameGroup = false;
+				
+				if(jsonObject != null) {
+					
+					//look for ENGAGELAB_XMPP key
+					if(jsonObject.ENGAGELAB_XMPP != null) {
+						switch(jsonObject.ENGAGELAB_XMPP.messageType) {
+							case MESSAGE_TYPE_CHAT:
+								//each message coming in will be appended as a tweet in the feed view
+								xmppUserGroup = Number((jsonObject.ENGAGELAB_XMPP.login as String).substr(8));
+								
+								if(xmppUserGroup >= thisGroupLowLimit && xmppUserGroup <= thisGroupHighLimit) {
+									areUserInSameGroup = true;
+								}
+								
+								if(areUserInSameGroup) {
+									switch(jsonObject.ENGAGELAB_XMPP.meal) {
+										case "breakfast":
+											changeColorForContact(breakfast, jsonObject.ENGAGELAB_XMPP.login, jsonObject.ENGAGELAB_XMPP.haseaten, jsonObject.ENGAGELAB_XMPP.dato, jsonObject.ENGAGELAB_XMPP.resetmeal);
+											break;
+										case "snack1":
+											changeColorForContact(snack1, jsonObject.ENGAGELAB_XMPP.login, jsonObject.ENGAGELAB_XMPP.haseaten, jsonObject.ENGAGELAB_XMPP.dato, jsonObject.ENGAGELAB_XMPP.resetmeal);
+											break;
+										case "lunch":
+											changeColorForContact(lunch, jsonObject.ENGAGELAB_XMPP.login, jsonObject.ENGAGELAB_XMPP.haseaten, jsonObject.ENGAGELAB_XMPP.dato, jsonObject.ENGAGELAB_XMPP.resetmeal);
+											break;
+										case "dinner":
+											changeColorForContact(dinner, jsonObject.ENGAGELAB_XMPP.login, jsonObject.ENGAGELAB_XMPP.haseaten, jsonObject.ENGAGELAB_XMPP.dato, jsonObject.ENGAGELAB_XMPP.resetmeal);
+											break;
+										case "snack2":
+											changeColorForContact(snack2, jsonObject.ENGAGELAB_XMPP.login, jsonObject.ENGAGELAB_XMPP.haseaten, jsonObject.ENGAGELAB_XMPP.dato, jsonObject.ENGAGELAB_XMPP.resetmeal);
+											break;
+										case "evening":
+											changeColorForContact(evening, jsonObject.ENGAGELAB_XMPP.login, jsonObject.ENGAGELAB_XMPP.haseaten, jsonObject.ENGAGELAB_XMPP.dato, jsonObject.ENGAGELAB_XMPP.resetmeal);
+											break;
+									}
+								}
+								
+								break;
+							
+							case MESSAGE_TYPE_LOG:
+								//each message coming in will be appended as a tweet in the feed view
+								if(jsonObject.ENGAGELAB_XMPP.login == so.data.xmmppname.login) {
+									logArray.addItem(jsonObject.ENGAGELAB_XMPP);
+								}
+								
+								break;
+						}
+					}
+				}
+			}
+			
+			protected function resetSocialHeads():void {
+				var mi:mealItem;
+				for (var j:int = 0; j < mealItemGroup.numElements; j++) {
+					mi = mealItemGroup.getElementAt(j) as mealItem;
+					mi.colorAppetitt1 = mealItem.DEFAULT_SOCIAL;
+					mi.colorAppetitt2 = mealItem.DEFAULT_SOCIAL;
+					mi.colorAppetitt3 = mealItem.DEFAULT_SOCIAL;
+					mi.colorAppetitt4 = mealItem.DEFAULT_SOCIAL;
+					mi.userIndex = Number((so.data.xmmppname.login as String).substr(8));
+				}
+			}
+			
+			protected function changeColorForContact(meal:mealItem, user:String, hasEaten:Boolean, dato:Number, resetMeal:Boolean):void {
+				if(so.data.xmmppname.login == user && dato == formattedToday) {
+					hasbrowsedToday = true;
+				}
+				
+				
+				var mi:mealItem;
+				for (var i:int = 0; i < mealItemGroup.numElements; i++) {
+					mi = mealItemGroup.getElementAt(i) as mealItem;
+					
+					switch(user) {
+						case IPADS_LIST[1].login:
+							if(mi.colorAppetitt1 != mealItem.CHOSEN_1) {
+								mi.colorAppetitt1 = mealItem.DEFAULT_SOCIAL;
+							}
+							break;
+						case IPADS_LIST[2].login:
+							if(mi.colorAppetitt2 != mealItem.CHOSEN_2) {
+								mi.colorAppetitt2 = mealItem.DEFAULT_SOCIAL;
+							}
+							break;
+						case IPADS_LIST[3].login:
+							if(mi.colorAppetitt3 != mealItem.CHOSEN_3) {
+								mi.colorAppetitt3 = mealItem.DEFAULT_SOCIAL;
+							}
+							break;
+						case IPADS_LIST[4].login:
+							if(mi.colorAppetitt4 != mealItem.CHOSEN_4) {
+								mi.colorAppetitt4 = mealItem.DEFAULT_SOCIAL;
+							}
+							break;
+						case IPADS_LIST[5].login:
+							if(mi.colorAppetitt1 != mealItem.CHOSEN_1) {
+								mi.colorAppetitt1 = mealItem.DEFAULT_SOCIAL;
+							}
+							break;
+						case IPADS_LIST[6].login:
+							if(mi.colorAppetitt2 != mealItem.CHOSEN_2) {
+								mi.colorAppetitt2 = mealItem.DEFAULT_SOCIAL;
+							}
+							break;
+						case IPADS_LIST[7].login:
+							if(mi.colorAppetitt3 != mealItem.CHOSEN_3) {
+								mi.colorAppetitt3 = mealItem.DEFAULT_SOCIAL;
+							}
+							break;
+						case IPADS_LIST[8].login:
+							if(mi.colorAppetitt4 != mealItem.CHOSEN_4) {
+								mi.colorAppetitt4 = mealItem.DEFAULT_SOCIAL;
+							}
+							break;
+						case IPADS_LIST[9].login:
+							if(mi.colorAppetitt1 != mealItem.CHOSEN_1) {
+								mi.colorAppetitt1 = mealItem.DEFAULT_SOCIAL;
+							}
+							break;
+						case IPADS_LIST[10].login:
+							if(mi.colorAppetitt2 != mealItem.CHOSEN_2) {
+								mi.colorAppetitt2 = mealItem.DEFAULT_SOCIAL;
+							}
+							break;
+						case IPADS_LIST[11].login:
+							if(mi.colorAppetitt3 != mealItem.CHOSEN_3) {
+								mi.colorAppetitt3 = mealItem.DEFAULT_SOCIAL;
+							}
+							break;
+						case IPADS_LIST[12].login:
+							if(mi.colorAppetitt4 != mealItem.CHOSEN_4) {
+								mi.colorAppetitt4 = mealItem.DEFAULT_SOCIAL;
+							}
+							break;
+					}
+				}
+				
+				
+				switch(user) {
+					case IPADS_LIST[1].login:
+						if(!hasEaten && meal.colorAppetitt1 != mealItem.CHOSEN_1 && dato == formattedToday) {
+							meal.colorAppetitt1 = mealItem.BROWSING_1;
+						}
+						else if(dato == formattedToday) {
+							meal.colorAppetitt1 = mealItem.CHOSEN_1;	
+						}
+						
+						if(resetMeal && dato == formattedToday) {
+							meal.colorAppetitt1 = mealItem.DEFAULT_SOCIAL;	
+						}
+						
+						break;
+					case IPADS_LIST[2].login:
+						if(!hasEaten && meal.colorAppetitt2 != mealItem.CHOSEN_2 && dato == formattedToday) {
+							meal.colorAppetitt2 = mealItem.BROWSING_2;
+						}
+						else if(dato == formattedToday) {
+							meal.colorAppetitt2 = mealItem.CHOSEN_2;
+						}
+						
+						if(resetMeal && dato == formattedToday) {
+							meal.colorAppetitt2 = mealItem.DEFAULT_SOCIAL;	
+						}
+						break;
+					case IPADS_LIST[3].login:
+						if(!hasEaten && meal.colorAppetitt3 != mealItem.CHOSEN_3 && dato == formattedToday) {
+							meal.colorAppetitt3 = mealItem.BROWSING_3;
+						}
+						else if(dato == formattedToday) {
+							meal.colorAppetitt3 = mealItem.CHOSEN_3;							
+						}
+						
+						if(resetMeal && dato == formattedToday) {
+							meal.colorAppetitt3 = mealItem.DEFAULT_SOCIAL;	
+						}
+						break;
+					case IPADS_LIST[4].login:
+						if(!hasEaten && meal.colorAppetitt4 != mealItem.CHOSEN_4 && dato == formattedToday) {
+							meal.colorAppetitt4 = mealItem.BROWSING_4;
+						}
+						else if(dato == formattedToday) {
+							meal.colorAppetitt4 = mealItem.CHOSEN_4;
+						}
+						
+						if(resetMeal && dato == formattedToday) {
+							meal.colorAppetitt4 = mealItem.DEFAULT_SOCIAL;	
+						}
+						break;
+					case IPADS_LIST[5].login:
+						if(!hasEaten && meal.colorAppetitt1 != mealItem.CHOSEN_1 && dato == formattedToday) {
+							meal.colorAppetitt1 = mealItem.BROWSING_1;
+						}
+						else if(dato == formattedToday) {
+							meal.colorAppetitt1 = mealItem.CHOSEN_1;	
+						}
+						
+						if(resetMeal && dato == formattedToday) {
+							meal.colorAppetitt1 = mealItem.DEFAULT_SOCIAL;	
+						}
+						
+						break;
+					case IPADS_LIST[6].login:
+						if(!hasEaten && meal.colorAppetitt2 != mealItem.CHOSEN_2 && dato == formattedToday) {
+							meal.colorAppetitt2 = mealItem.BROWSING_2;
+						}
+						else if(dato == formattedToday) {
+							meal.colorAppetitt2 = mealItem.CHOSEN_2;
+						}
+						
+						if(resetMeal && dato == formattedToday) {
+							meal.colorAppetitt2 = mealItem.DEFAULT_SOCIAL;	
+						}
+						break;
+					case IPADS_LIST[7].login:
+						if(!hasEaten && meal.colorAppetitt3 != mealItem.CHOSEN_3 && dato == formattedToday) {
+							meal.colorAppetitt3 = mealItem.BROWSING_3;
+						}
+						else if(dato == formattedToday) {
+							meal.colorAppetitt3 = mealItem.CHOSEN_3;							
+						}
+						
+						if(resetMeal && dato == formattedToday) {
+							meal.colorAppetitt3 = mealItem.DEFAULT_SOCIAL;	
+						}
+						break;
+					case IPADS_LIST[8].login:
+						if(!hasEaten && meal.colorAppetitt4 != mealItem.CHOSEN_4 && dato == formattedToday) {
+							meal.colorAppetitt4 = mealItem.BROWSING_4;
+						}
+						else if(dato == formattedToday) {
+							meal.colorAppetitt4 = mealItem.CHOSEN_4;
+						}
+						
+						if(resetMeal && dato == formattedToday) {
+							meal.colorAppetitt4 = mealItem.DEFAULT_SOCIAL;	
+						}
+						break;
+					case IPADS_LIST[9].login:
+						if(!hasEaten && meal.colorAppetitt1 != mealItem.CHOSEN_1 && dato == formattedToday) {
+							meal.colorAppetitt1 = mealItem.BROWSING_1;
+						}
+						else if(dato == formattedToday) {
+							meal.colorAppetitt1 = mealItem.CHOSEN_1;	
+						}
+						
+						if(resetMeal && dato == formattedToday) {
+							meal.colorAppetitt1 = mealItem.DEFAULT_SOCIAL;	
+						}
+						
+						break;
+					case IPADS_LIST[10].login:
+						if(!hasEaten && meal.colorAppetitt2 != mealItem.CHOSEN_2 && dato == formattedToday) {
+							meal.colorAppetitt2 = mealItem.BROWSING_2;
+						}
+						else if(dato == formattedToday) {
+							meal.colorAppetitt2 = mealItem.CHOSEN_2;
+						}
+						
+						if(resetMeal && dato == formattedToday) {
+							meal.colorAppetitt2 = mealItem.DEFAULT_SOCIAL;	
+						}
+						break;
+					case IPADS_LIST[11].login:
+						if(!hasEaten && meal.colorAppetitt3 != mealItem.CHOSEN_3 && dato == formattedToday) {
+							meal.colorAppetitt3 = mealItem.BROWSING_3;
+						}
+						else if(dato == formattedToday) {
+							meal.colorAppetitt3 = mealItem.CHOSEN_3;							
+						}
+						
+						if(resetMeal && dato == formattedToday) {
+							meal.colorAppetitt3 = mealItem.DEFAULT_SOCIAL;	
+						}
+						break;
+					case IPADS_LIST[12].login:
+						if(!hasEaten && meal.colorAppetitt4 != mealItem.CHOSEN_4 && dato == formattedToday) {
+							meal.colorAppetitt4 = mealItem.BROWSING_4;
+						}
+						else if(dato == formattedToday) {
+							meal.colorAppetitt4 = mealItem.CHOSEN_4;
+						}
+						
+						if(resetMeal && dato == formattedToday) {
+							meal.colorAppetitt4 = mealItem.DEFAULT_SOCIAL;	
+						}
+						break;
+				}
+			}
+			
+			/**
+			 * 
+			 * Function for posting a new tweet
+			 * 
+			 **/
+			protected function sendSocial(event:DroppedMealEvent):void {
+				//create the tweet object
+				var params:Object = new Object();
+				params.messageType = MESSAGE_TYPE_CHAT;
+				params.login = so.data.xmmppname.login;
+				params.meal = event.mealType;
+				params.haseaten = event.hasEaten;	
+				params.resetmeal = event.resetMeal;	
+				params.dato = formattedToday;
+								
+				//provide the key/value definition
+				var key:Object = new Object();
+				key.ENGAGELAB_XMPP = params;
+				
+				if(event.history != null) {
+					var mi:mealItem;
+					for (var j:int = 0; j < mealItemGroup.numElements; j++) {
+						mi = mealItemGroup.getElementAt(j) as mealItem;
+						mi.updateHistory(event.history[formattedToday].mealtypeList);
+					}
+				}
+				
+				if(isOnline) {
+					connection.plugin['muc'].sendJSONMessage('appetittmain.'+XMPP_SERVER, ACTIVITY_ROOM, "meal chosen by:"+params.login, null, com.adobe.serialization.json.JSON.encode(key));
+				}
+				
+				hasReportedToday = true;
+			}
+			
+			private function logAction(evt:LogActionEvent):void {
+				//create the tweet object
+				var params:Object = new Object();
+				params.messageType = MESSAGE_TYPE_LOG;
+				params.login = so.data.xmmppname.login;
+				params.action = evt.action;
+				params.dato = new Date().time;
+				
+				//provide the key/value definition
+				var key:Object = new Object();
+				key.ENGAGELAB_XMPP = params;
+				
+				if(evt.undoLast) {
+					switch(evt.mealtype) {
+						case "breakfast":
+							breakfast.currentState = "default";
+							break;
+						case "snack1":
+							snack1.currentState = "default";
+							break;
+						case "lunch":
+							lunch.currentState = "default";
+							break;
+						case "dinner":
+							dinner.currentState = "default";
+							break;
+						case "snack2":
+							snack2.currentState = "default";
+							break;
+						case "evening":
+							evening.currentState = "default";
+							break;
+					}
+					
+					messageLastMealDrop = null;
+					getMealBasedOnTime(new Date());
+				}
+				
+				if(isOnline) {
+					connection.plugin['muc'].sendJSONMessage('appetittdata.'+XMPP_SERVER, LOG_ROOM, "activity log by:"+params.login, null, com.adobe.serialization.json.JSON.encode(key));
+				}
+			}
+			
+			protected function group1_clickHandler(event:MouseEvent):void {
+				longTapTimer = setInterval(showCallOut, 2000);
+			}
+			
+			protected function showCallOut():void {
+				//long hold finished
+				clearInterval(longTapTimer);
+				showSettings();
+			}		
+			
+			private function handleUndoButton(evt:UndoButtonEvent):void {
+				undoButton.enabled = evt.enabled;
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<mx:DateFormatter id="timeFormatter" formatString="JJ:NN" />
+		<mx:DateFormatter id="dayoFormatter" formatString="EEEE" />
+		<mx:DateFormatter id="datoFormatter" formatString="DD" />
+		<mx:DateFormatter id="monthFormatter" formatString="MMMM" />
+		<mx:DateFormatter id="todayFormatter" formatString="YYYYMMDD" />
+		<s:ArrayCollection id="logArray" />
+		<fx:String id="messageLastMealDrop" />
+		<fx:String id="dayPeriod" />
+		<s:Sequence id="scaleMan">
+			<s:Animate target="{bodyImage}">
+				<s:SimpleMotionPath property="scaleY" valueFrom="1.0" valueTo="1.1" />
+				<s:SimpleMotionPath property="y" valueFrom="0" valueTo="-20" />
+			</s:Animate>
+			<s:Animate target="{bodyImage}">
+				<s:SimpleMotionPath property="scaleY" valueFrom="1.1" valueTo="1.0" />
+				<s:SimpleMotionPath property="y" valueFrom="-20" valueTo="0" />
+			</s:Animate>
+		</s:Sequence>
+		
+		<s:Sequence id="notifyerSequence">
+			<s:Move target="{notifyer}" yFrom="{-notifyer.height}" yTo="0" />
+			<s:Pause duration="5000" />
+			<s:Move target="{notifyer}" yFrom="0" yTo="{-notifyer.height}" />
+		</s:Sequence>
+	</fx:Declarations>
+	
+	<s:Image cacheAsBitmap="true" source="@Embed('assets/graphics/bg_a.png')" smooth="true" smoothingQuality="high" />
+	
+	<components:recipeBrowser id="recipeArea" width="525" height="636" bottom="32" left="31" />
+	
+	<s:Group right="0" bottom="0" width="442" height="696">
+		<s:Rect width="100%" height="100%">
+			<s:fill>
+				<s:SolidColor color="#FFFFFF" />
+			</s:fill>
+		</s:Rect>
+		<components:bodyCounter width="256" height="450" id="bodyArea" right="20" bottom="98" />
+		<s:Image cacheAsBitmap="true" source="@Embed('assets/graphics/side_b.png')" smooth="true" smoothingQuality="high" id="bodyImage"  />
+		<s:Button id="undoButton" width="256" bottom="30" right="20" icon="@Embed('assets/graphics/angre.png')" skinClass="itemRenderers.UndoButtonSkin" enabled="true" click="{bodyArea.undoLast()}" />
+		
+		<s:VGroup height="100%" width="133" id="timeprogress" gap="0" left="25" />
+		
+		<s:VGroup width="100%" height="100%" gap="0" id="mealItemGroup" top="30" bottom="12">
+			<components:mealItem width="142" height="100%" touchBegin="dragMe(event)" iconName="food.png" id="breakfast" />
+			<components:mealItem width="142" height="100%" touchBegin="dragMe(event)" iconName="food1.png" id="snack1" />
+			<components:mealItem width="142" height="100%" touchBegin="dragMe(event)" iconName="food2.png" id="lunch" />
+			<components:mealItem width="142" height="100%" touchBegin="dragMe(event)" iconName="food3.png" id="dinner" />
+			<components:mealItem width="142" height="100%" touchBegin="dragMe(event)" iconName="food4.png" id="snack2" />
+			<components:mealItem width="142" height="100%" touchBegin="dragMe(event)" iconName="food5.png" id="evening" />
+		</s:VGroup>
+		<s:HGroup gap="20" right="30" top="30">
+			<components:mealItem width="118" height="108" touchBegin="dragMe(event)" iconName="water1.png" id="cold" currentState="water" />
+			<components:mealItem width="118" height="108" touchBegin="dragMe(event)" iconName="water2.png" id="hot" currentState="water" />	
+		</s:HGroup>
+	</s:Group>
+	
+	<s:SkinnableContainer width="100%" height="72" backgroundColor="#000000">
+		<s:HGroup width="100%" height="100%" gap="0" id="banner">
+			<s:HGroup id="mealTitleGroup" width="580" height="100%" gap="0" verticalAlign="middle">
+				<s:Spacer width="25" />
+				<s:Image id="settingsButton" cacheAsBitmap="true" smooth="true" smoothingQuality="high" source="@Embed('assets/graphics/logo.png')" width="51" height="51" mouseDown="group1_clickHandler(event)" mouseUp="clearInterval(longTapTimer)" />
+				<s:Label id="mealTitle" paddingLeft="20" color="#FFFFFF" width="100%" height="100%" fontFamily="myhelveticalight" fontSize="50" verticalAlign="middle" />
+			</s:HGroup>	
+			<s:Label id="clock" height="100%" paddingLeft="30" width="170" color="#FFFFFF" verticalAlign="middle" fontFamily="myhelveticabold" fontSize="50" />
+			<s:VGroup height="100%" width="274" gap="-10" verticalAlign="middle">
+				<s:Label id="dayo" width="100%" color="#FFFFFF" fontFamily="myhelveticabold" verticalAlign="middle" textAlign="left" fontSize="25" minHeight="10" />
+				<s:Label id="dato" width="100%" color="#FFFFFF" fontFamily="myhelveticalight" verticalAlign="middle" textAlign="left" fontSize="25" minHeight="10" />
+			</s:VGroup>
+		</s:HGroup>
+	</s:SkinnableContainer>
+	
+	<s:SkinnableContainer id="notifyer" width="100%" height="70" y="{-notifyer.height}" backgroundColor="#000000" backgroundAlpha=".8">
+		<s:HGroup horizontalCenter="-200" verticalCenter="0" gap="20">
+			<s:BitmapImage source="@Embed('assets/graphics/notification.jpg')" smooth="true" smoothingQuality="high" />
+			<s:VGroup>
+				<s:Label text="Appetitt" color="#FFFFFF" fontFamily="myhelveticabold" fontSize="15" />
+				<s:Label text="{notificationMessage}" color="#FFFFFF" fontFamily="myhelveticalight" fontSize="13" />
+			</s:VGroup>
+		</s:HGroup>
+	</s:SkinnableContainer> 
+	
+	<s:Group width="100%" height="100%" id="draggerHolder" />
+	
+	<s:Group width="{navigator.width}" height="{navigator.height}" id="waiter">
+		<s:BitmapImage source="@Embed('assets/graphics/splash.png')" scaleMode="stretch" smooth="true" smoothingQuality="high" />
+		<s:VGroup  horizontalCenter="0" verticalCenter="100" verticalAlign="middle" horizontalAlign="center">
+			<s:BusyIndicator symbolColor="#333333" width="50" height="50" />
+			<s:Label color="#333333" text="{Number((percentLoaded*100)/1500).toFixed(0)+' %'}" fontSize="12" />
+		</s:VGroup>
+	</s:Group>
+</s:View>

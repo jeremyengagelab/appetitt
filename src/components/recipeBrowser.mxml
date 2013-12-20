@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:SkinnableContainer xmlns:fx="http://ns.adobe.com/mxml/2009" 
+					  xmlns:s="library://ns.adobe.com/flex/spark">
+	<fx:Script>
+		<![CDATA[
+			import customEvents.LogActionEvent;
+			
+			import mx.events.FlexEvent;
+			
+			import views.main;
+			
+			private static const BREAKFAST_ALT_1:Array = ["arme riddere","btn/breakfast_btn/0.png", "breakfast/alt0", "0.png", "1.png", "2.png"];
+			private static const BREAKFAST_ALT_2:Array = ["brøskive med gulost","btn/breakfast_btn/1.png", "breakfast/alt1", "0.png", "1.png", "2.png"];
+			private static const BREAKFAST_ALT_3:Array = ["brøskive med kjøttpålegg","btn/breakfast_btn/2.png", "breakfast/alt2", "0.png", "1.png", "2.png"];
+			private static const BREAKFAST_ALT_4:Array = ["grove rundstykker","btn/breakfast_btn/3.png", "breakfast/alt3", "0.png", "1.png", "2.png", "3.png", "4.png"];
+			private static const BREAKFAST_ALT_5:Array = ["brøskive med leverpostei og rødbeter","btn/breakfast_btn/4.png", "breakfast/alt4", "0.png", "1.png", "2.png"];
+			private static const BREAKFAST_ALT_6:Array = ["havregrøt","btn/breakfast_btn/5.png", "breakfast/alt5", "0.png", "1.png", "2.png"];
+			private static const BREAKFAST_ALT_7:Array = ["brøskive med makrell i tomat","btn/breakfast_btn/6.png", "breakfast/alt6", "0.png", "1.png", "2.png"];
+			private static const BREAKFAST_ALT_8:Array = ["brøskive med sylte og rødbeter","btn/breakfast_btn/7.png", "breakfast/alt7", "0.png", "1.png", "2.png"];
+			private static const BREAKFAST_ALT_9:Array = ["brøskive med rekesalat","btn/breakfast_btn/8.png", "breakfast/alt8", "0.png", "1.png", "2.png"];
+			private static const BREAKFAST_ALT_10:Array = ["kokt egg","btn/breakfast_btn/9.png", "breakfast/alt9", "0.png", "1.png", "2.png"];
+			private static const BREAKFAST_ALT_11:Array = ["kornblanding","btn/breakfast_btn/10.png", "breakfast/alt10", "0.png", "1.png", "2.png"];
+			private static const BREAKFAST_ALT_12:Array = ["brøskive med smøreost","btn/breakfast_btn/11.png", "breakfast/alt11", "0.png", "1.png", "2.png"];
+			private static const BREAKFAST_ALT_13:Array = ["cornflakes","btn/breakfast_btn/12.png", "breakfast/alt12", "0.png", "1.png", "2.png"];
+			private static const BREAKFAST_ALT_14:Array = ["brøskive med sursild","btn/breakfast_btn/13.png", "breakfast/alt13", "0.png", "1.png", "2.png"];
+			private static const BREAKFAST_ALT_15:Array = ["egg og bacon","btn/breakfast_btn/14.png", "breakfast/alt14", "0.png", "1.png", "2.png"];
+			private static const BREAKFAST_ALT_16:Array = ["brøskive med syltetøy","btn/breakfast_btn/15.png", "breakfast/alt8", "0.png", "1.png", "2.png"];
+			private static const BREAKFAST:Array = [BREAKFAST_ALT_1, BREAKFAST_ALT_2, BREAKFAST_ALT_3, BREAKFAST_ALT_4, BREAKFAST_ALT_5, BREAKFAST_ALT_6, BREAKFAST_ALT_7, BREAKFAST_ALT_8, BREAKFAST_ALT_9, BREAKFAST_ALT_10, BREAKFAST_ALT_11, BREAKFAST_ALT_12, BREAKFAST_ALT_13, BREAKFAST_ALT_14, BREAKFAST_ALT_15, BREAKFAST_ALT_16];
+			
+			private static const SNACK1_ALT_1:Array = ["banan","btn/snack1_btn/0.png", "snack1/alt0", "0.png", "1.png"];
+			private static const SNACK1_ALT_2:Array = ["bringebærsmoothie","btn/snack1_btn/1.png", "snack1/alt1", "0.png", "1.png", "2.png"];
+			private static const SNACK1_ALT_3:Array = ["yoghurt","btn/snack1_btn/2.png", "snack1/alt2", "0.png", "1.png"];
+			private static const SNACK1_ALT_4:Array = ["nøtter og tørket frukt","btn/snack1_btn/3.png", "snack1/alt3", "0.png", "1.png"];
+			private static const SNACK1_ALT_5:Array = ["eple","btn/snack1_btn/4.png", "snack1/alt4", "0.png", "1.png"];
+			private static const SNACK1_ALT_6:Array = ["jordbærsmoothie","btn/snack1_btn/5.png", "snack1/alt5", "0.png", "1.png", "2.png"];
+			private static const SNACK1:Array = [SNACK1_ALT_1, SNACK1_ALT_2, SNACK1_ALT_3, SNACK1_ALT_4, SNACK1_ALT_5, SNACK1_ALT_6];
+			
+			private static const LUNCH_ALT_1:Array = ["tomatsuppe med egg","btn/lunch_btn/0.png", "lunch/alt0", "0.png", "1.png", "2.png", "3.png"];
+			private static const LUNCH_ALT_2:Array = ["brøskive med sylte og rødbeter","btn/lunch_btn/1.png", "lunch/alt1", "0.png", "1.png", "2.png"];
+			private static const LUNCH_ALT_3:Array = ["middelhavssalat","btn/lunch_btn/2.png", "lunch/alt2", "0.png", "1.png", "2.png"];
+			private static const LUNCH_ALT_4:Array = ["brøskive med makrell i tomat","btn/lunch_btn/3.png", "lunch/alt3", "0.png", "1.png", "2.png"];
+			private static const LUNCH_ALT_5:Array = ["brøskive med leverpostei og rødbeter","btn/lunch_btn/4.png", "lunch/alt4", "0.png", "1.png", "2.png"];
+			private static const LUNCH_ALT_6:Array = ["brøskive med røykelaks","btn/lunch_btn/5.png", "lunch/alt5", "0.png", "1.png", "2.png"];
+			private static const LUNCH_ALT_7:Array = ["grove rundstykker","btn/lunch_btn/6.png", "lunch/alt6", "0.png", "1.png", "2.png", "3.png", "4.png"];
+			private static const LUNCH_ALT_8:Array = ["brøskive med syltetøy","btn/lunch_btn/7.png", "lunch/alt7", "0.png", "1.png", "2.png"];
+			private static const LUNCH_ALT_9:Array = ["gresk salat","btn/lunch_btn/8.png", "lunch/alt8", "0.png", "1.png", "2.png", "3.png"];
+			private static const LUNCH_ALT_10:Array = ["brøskive med sursild","btn/lunch_btn/9.png", "lunch/alt9", "0.png", "1.png", "2.png"];
+			private static const LUNCH_ALT_11:Array = ["asparagessuppe","btn/lunch_btn/10.png", "lunch/alt10", "0.png", "1.png", "2.png"];
+			private static const LUNCH_ALT_12:Array = ["brøskive med røykelaks","btn/lunch_btn/11.png", "lunch/alt11", "0.png", "1.png", "2.png"];
+			private static const LUNCH_ALT_13:Array = ["brøskive med rekesalat","btn/lunch_btn/12.png", "lunch/alt12", "0.png", "1.png", "2.png"];
+			private static const LUNCH_ALT_14:Array = ["kikertsalat","btn/lunch_btn/13.png", "lunch/alt13", "0.png", "1.png", "2.png"];
+			private static const LUNCH_ALT_15:Array = ["brøskive med gulost","btn/lunch_btn/14.png", "lunch/alt14", "0.png", "1.png", "2.png"];
+			private static const LUNCH_ALT_16:Array = ["brøskive med kjøttpålegg","btn/lunch_btn/15.png", "lunch/alt15", "0.png", "1.png", "2.png"];
+			private static const LUNCH:Array = [LUNCH_ALT_1, LUNCH_ALT_2, LUNCH_ALT_3, LUNCH_ALT_4, LUNCH_ALT_5, LUNCH_ALT_6, LUNCH_ALT_7, LUNCH_ALT_8, LUNCH_ALT_9, LUNCH_ALT_10, LUNCH_ALT_11, LUNCH_ALT_12, LUNCH_ALT_13, LUNCH_ALT_14, LUNCH_ALT_15];
+			
+			private static const DINNER_ALT_1:Array = ["brennende kjærlighet","btn/dinner_btn/0.png", "dinner/alt0", "0.png", "1.png", "2.png", "3.png"];
+			private static const DINNER_ALT_2:Array = ["fiskeboller i karry","btn/dinner_btn/1.png", "dinner/alt1", "0.png", "1.png", "2.png", "3.png"];
+			private static const DINNER_ALT_3:Array = ["grillet kylling","btn/dinner_btn/2.png", "dinner/alt2", "0.png", "1.png", "2.png", "3.png", "4.png"];
+			private static const DINNER_ALT_4:Array = ["fiskegrateng","btn/dinner_btn/3.png", "dinner/alt3", "0.png", "1.png", "2.png", "3.png", "4.png"];
+			private static const DINNER_ALT_5:Array = ["gulasjsuppe","btn/dinner_btn/4.png", "dinner/alt4", "0.png", "1.png", "2.png", "3.png"];
+			private static const DINNER_ALT_6:Array = ["kjøttkaker","btn/dinner_btn/5.png", "dinner/alt5", "0.png", "1.png", "2.png", "3.png", "4.png", "5.png", "6.png", "7.png", "8.png", "9.png", "10.png", "11.png"];
+			private static const DINNER_ALT_7:Array = ["fiskegryte","btn/dinner_btn/6.png", "dinner/alt6", "0.png", "1.png", "2.png", "3.png", "4.png", "5.png"];
+			private static const DINNER_ALT_8:Array = ["middagspai","btn/dinner_btn/7.png", "dinner/alt7", "0.png", "1.png", "2.png", "3.png", "4.png", "5.png"];
+			private static const DINNER_ALT_9:Array = ["indisk gryterett","btn/dinner_btn/8.png", "dinner/alt8", "0.png", "1.png", "2.png", "3.png"];
+			private static const DINNER_ALT_10:Array = ["risengrynsgrøt","btn/dinner_btn/9.png", "dinner/alt9", "0.png", "1.png", "2.png", "3.png", "4.png"];
+			private static const DINNER_ALT_11:Array = ["grove seiburgere","btn/dinner_btn/10.png", "dinner/alt10", "0.png", "1.png", "2.png", "3.png"];
+			private static const DINNER_ALT_12:Array = ["kjøtt i mørke","btn/dinner_btn/11.png", "dinner/alt11", "0.png", "1.png", "2.png", "3.png"];
+			private static const DINNER_ALT_13:Array = ["kyllinggryte","btn/dinner_btn/12.png", "dinner/alt12", "0.png", "1.png", "2.png", "3.png", "4.png", "5.png"];
+			private static const DINNER_ALT_14:Array = ["lasagne","btn/dinner_btn/13.png", "dinner/alt13", "0.png", "1.png", "2.png", "3.png", "4.png", "5.png"];
+			private static const DINNER_ALT_15:Array = ["lakseform med brokkoli","btn/dinner_btn/14.png", "dinner/alt14", "0.png", "1.png", "2.png", "3.png", "4.png"];
+			private static const DINNER_ALT_16:Array = ["lapskaus","btn/dinner_btn/15.png", "dinner/alt15", "0.png", "1.png", "2.png", "3.png", "4.png", "5.png"];
+			private static const DINNER_ALT_17:Array = ["pastasalat","btn/dinner_btn/16.png", "dinner/alt16", "0.png", "1.png", "2.png", "3.png"];
+			private static const DINNER_ALT_18:Array = ["pølsegryte","btn/dinner_btn/17.png", "dinner/alt17", "0.png", "1.png", "2.png", "3.png"];
+			private static const DINNER_ALT_19:Array = ["svinekjøtt og grønnsaker","btn/dinner_btn/18.png", "dinner/alt18", "0.png", "1.png", "2.png", "3.png", "4.png"];
+			private static const DINNER_ALT_20:Array = ["moussaka","btn/dinner_btn/19.png", "dinner/alt19", "0.png", "1.png", "2.png", "3.png", "4.png", "5.png"];
+			private static const DINNER_ALT_21:Array = ["wok","btn/dinner_btn/20.png", "dinner/alt20", "0.png", "1.png", "2.png", "3.png"];
+			private static const DINNER:Array = [DINNER_ALT_1, DINNER_ALT_2, DINNER_ALT_3, DINNER_ALT_4, DINNER_ALT_5, DINNER_ALT_6, DINNER_ALT_7, DINNER_ALT_8, DINNER_ALT_9, DINNER_ALT_10, DINNER_ALT_11, DINNER_ALT_12, DINNER_ALT_13, DINNER_ALT_14, DINNER_ALT_15, DINNER_ALT_16, DINNER_ALT_17, DINNER_ALT_18, DINNER_ALT_19, DINNER_ALT_20, DINNER_ALT_21];
+			
+			private static const SNACK2_ALT_1:Array = ["vaffel","btn/snack2_btn/0.png", "snack2/alt0", "0.png", "1.png", "2.png", "3.png"];
+			private static const SNACK2_ALT_2:Array = ["appelsin og banansalat","btn/snack2_btn/1.png", "snack2/alt1", "0.png", "1.png", "2.png"];
+			private static const SNACK2_ALT_3:Array = ["nøtter og tørket frukt","btn/snack2_btn/2.png", "snack2/alt2", "0.png", "1.png"];
+			private static const SNACK2_ALT_4:Array = ["muffins","btn/snack2_btn/3.png", "snack2/alt3", "0.png", "1.png", "2.png", "3.png"];
+			private static const SNACK2_ALT_5:Array = ["ost og kjeks","btn/snack2_btn/4.png", "snack2/alt4", "0.png", "1.png", "2.png"];
+			private static const SNACK2_ALT_6:Array = ["kjeks","btn/snack2_btn/5.png", "snack2/alt5", "0.png", "1.png"];
+			private static const SNACK2_ALT_7:Array = ["jordbær og fløte","btn/snack2_btn/6.png", "snack2/alt6", "0.png", "1.png", "2.png"];
+			private static const SNACK2_ALT_8:Array = ["marmorkake","btn/snack2_btn/7.png", "snack2/alt7", "0.png", "1.png", "2.png", "3.png", "4.png"];
+			private static const SNACK2_ALT_9:Array = ["frukt","btn/snack2_btn/8.png", "snack2/alt8", "0.png", "1.png"];
+			private static const SNACK2:Array = [SNACK2_ALT_1, SNACK2_ALT_2, SNACK2_ALT_3, SNACK2_ALT_4, SNACK2_ALT_5, SNACK2_ALT_6, SNACK2_ALT_7, SNACK2_ALT_8, SNACK2_ALT_9];
+			
+			private static const EVENING_ALT_1:Array = ["yoghurt","btn/evening_btn/0.png", "evening/alt0", "0.png", "1.png", "2.png"];
+			private static const EVENING_ALT_2:Array = ["brøskive med gulost","btn/evening_btn/1.png", "evening/alt1", "0.png", "1.png", "2.png"];
+			private static const EVENING_ALT_3:Array = ["brøskive med kjøttpålegg","btn/evening_btn/2.png", "evening/alt2", "0.png", "1.png", "2.png"];
+			private static const EVENING_ALT_4:Array = ["grove rundstykker","btn/evening_btn/3.png", "evening/alt3", "0.png", "1.png", "2.png", "3.png", "4.png"];
+			private static const EVENING_ALT_5:Array = ["brøskive med leverpostei og rødbeter","btn/evening_btn/4.png", "evening/alt4", "0.png", "1.png", "2.png"];
+			private static const EVENING_ALT_6:Array = ["brøskive med makrell i tomat","btn/evening_btn/5.png", "evening/alt5", "0.png", "1.png", "2.png"];
+			private static const EVENING_ALT_7:Array = ["knekkebrød","btn/evening_btn/6.png", "evening/alt6", "0.png", "1.png", "2.png"];
+			private static const EVENING_ALT_8:Array = ["brøskive med rekesalat","btn/evening_btn/7.png", "evening/alt7", "0.png", "1.png", "2.png"];
+			private static const EVENING_ALT_9:Array = ["brøskive med røykelaks","btn/evening_btn/8.png", "evening/alt8", "0.png", "1.png", "2.png"];
+			private static const EVENING_ALT_10:Array = ["brøskive med smøreost","btn/evening_btn/9.png", "evening/alt9", "0.png", "1.png", "2.png"];
+			private static const EVENING_ALT_11:Array = ["ost og kjeks","btn/evening_btn/10.png", "evening/alt10", "0.png", "1.png", "2.png"];
+			private static const EVENING_ALT_12:Array = ["brøskive med sylte og rødbeter","btn/evening_btn/11.png", "evening/alt11", "0.png", "1.png", "2.png"];
+			private static const EVENING_ALT_13:Array = ["kornblanding","btn/evening_btn/12.png", "evening/alt12", "0.png", "1.png", "2.png"];
+			private static const EVENING_ALT_14:Array = ["brøskive med sursild","btn/evening_btn/13.png", "evening/alt13", "0.png", "1.png", "2.png"];
+			private static const EVENING_ALT_15:Array = ["brøskive med syltetøy","btn/evening_btn/14.png", "evening/alt14", "0.png", "1.png", "2.png"];
+			private static const EVENING:Array = [EVENING_ALT_1, EVENING_ALT_2, EVENING_ALT_3, EVENING_ALT_4, EVENING_ALT_5, EVENING_ALT_6, EVENING_ALT_7, EVENING_ALT_8, EVENING_ALT_9, EVENING_ALT_10, EVENING_ALT_11, EVENING_ALT_12, EVENING_ALT_13, EVENING_ALT_14, EVENING_ALT_15];
+			
+			private var previouslySelectedArrayIndex:Number = -1;
+			private var currentImageIndex:Number;
+			private var _loopingArray:Array;
+			private var _currentThumb:String;
+			
+			private var lastMealType:String;
+			private var _newMealType:String;
+			
+			[Bindable] private var waitImageSource:String;
+			
+			public function get currentThumb():String
+			{
+				return _currentThumb;
+			}
+
+			public function get loopingArray():Array {
+				return _loopingArray;
+			}
+
+			public function get newMealType():String {
+				return _newMealType;
+			}
+
+			public function showMealType(mealType:String):void {
+				_newMealType = mealType;
+				switch(mealType) {
+					case main.BREAKFAST:
+						presentNewDish(BREAKFAST);
+						break;
+					case main.SNACK1:
+						presentNewDish(SNACK1);
+						break;
+					case main.LUNCH:
+						presentNewDish(LUNCH);
+						break;
+					case main.DINNER:
+						presentNewDish(DINNER);
+						break;
+					case main.SNACK2:
+						presentNewDish(SNACK2);
+						break;
+					case main.EVENING:
+						presentNewDish(EVENING);
+						break;
+				}
+			}
+			
+			protected function presentNewDish(selectedDishArray:Array):void {
+				
+				if(lastMealType != newMealType) {
+					previouslySelectedArrayIndex = -1;
+					lastMealType = newMealType;
+				}
+				
+				if(previouslySelectedArrayIndex == -1) {
+					previouslySelectedArrayIndex = Math.floor(Math.random() * ((selectedDishArray.length-1) + 1));
+				}
+				
+				if(previouslySelectedArrayIndex < selectedDishArray.length - 1) {
+					previouslySelectedArrayIndex++;
+				}
+				else {
+					previouslySelectedArrayIndex = 0;
+				}
+				
+				if(selectedDishArray[previouslySelectedArrayIndex] != null) {
+					_loopingArray = selectedDishArray[previouslySelectedArrayIndex];
+					_currentThumb = _loopingArray[1];
+					currentImageIndex = 3;
+					loadImage(currentImageIndex);
+					
+					var lae:LogActionEvent = new LogActionEvent(LogActionEvent.LOG_ACTION, true);
+					lae.action = LogActionEvent.STOP_DRAG + " - recipeArea ("+loopingArray[0]+")";
+					dispatchEvent(lae);
+				}
+				
+			}
+			
+			protected function loadImage(imageIndex:Number):void {
+				recipeImage.source = "assets/"+loopingArray[2]+"/"+loopingArray[imageIndex];
+				dishName = loopingArray[0];
+			}
+			
+			public function loopThroughMealType():void {
+				if(currentImageIndex < (loopingArray.length - 1)) {
+					currentImageIndex++;	
+				}
+				else {
+					currentImageIndex = 3;
+				}
+				
+				loadImage(currentImageIndex);				
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<fx:String id="dishName" />
+		<fx:String id="messTitle" />
+		<fx:String id="messBdy" />
+		<s:Animate target="{waitImage}" id="fadeIn" duration="2000">
+			<s:SimpleMotionPath property="alpha" valueFrom="0.0" valueTo="1.0" />
+		</s:Animate>
+	</fx:Declarations>
+	
+	<s:states>
+		<s:State name="default" />
+		<s:State name="graphic" />
+	</s:states>
+	
+	<s:Image visible.default="false" id="recipeImage" width="525" height="636" scaleMode="stretch" horizontalCenter="0" verticalCenter="0" smooth="true" smoothingQuality="high" />
+	
+	<s:VGroup visible.graphic="false" id="waitImage" width="375" show="fadeIn.play()" horizontalCenter="0" verticalCenter="-80">
+		<s:Label id="labTitle" text="{messTitle}" fontFamily="myhelveticalight" fontSize="50" color="#000000" width="100%" />
+		<s:Label id="labdy" text="{messBdy}" fontFamily="myhelveticalight" fontSize="40" color="#000000" width="100%" />
+	</s:VGroup>
+</s:SkinnableContainer>

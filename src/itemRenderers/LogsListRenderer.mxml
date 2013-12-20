@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:ItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark" xmlns:mx="library://ns.adobe.com/flex/mx">
+	
+	
+	<fx:Declarations>
+		<mx:DateFormatter id="dateFormatter" formatString="EEEE DD MMMM - JJ:NN:SS" />
+	</fx:Declarations>
+	
+	<s:HGroup left="10" top="10" bottom="10" right="10">
+		<s:Label width="300" text="{dateFormatter.format(new Date(Number(data.dato)))}" />
+		<s:Label width="100%" text="{String(data.action).toUpperCase()}" />
+	</s:HGroup>
+</s:ItemRenderer>

@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark" title="settings" actionBarVisible="false" backgroundColor="#333333" viewActivate="view1_viewActivateHandler(event)" xmlns:mx="library://ns.adobe.com/flex/mx">
+	
+	<fx:Script>
+		<![CDATA[
+			import flash.notifications.NotificationStyle;
+			import flash.notifications.RemoteNotifier;
+			import flash.notifications.RemoteNotifierSubscribeOptions;
+			
+			import mx.collections.ArrayCollection;
+			import mx.events.FlexEvent;
+			
+			import spark.collections.Sort;
+			import spark.collections.SortField;
+			import spark.core.NavigationUnit;
+			import spark.events.IndexChangeEvent;
+			import spark.events.TextOperationEvent;
+			import spark.events.ViewNavigatorEvent;
+			
+			private static const MENU_BUTTONS:ArrayCollection = new ArrayCollection(["PROFIL", "MIN KALENDER", "DATALOGG", "KOSTHOLD", "OM APPETITT"]);
+			
+			private var so:SharedObject;
+			private var history:Dictionary;
+			[Bindable] private var historyArray:ArrayCollection;
+			
+			
+			protected function showMainView(event:MouseEvent):void {
+				navigator.pushView(main, null, null, null);
+			}
+			
+			protected function nameInput_changeHandler(event:TextOperationEvent):void {
+				profileGroupButton.enabled = true;
+			}
+			
+			protected function menuList_changeHandler(event:IndexChangeEvent):void {
+				profileGroupButton.enabled = true;
+			}
+			
+			protected function saveProfile(event:MouseEvent):void {
+				profileGroupButton.enabled = false;
+				so.data.xmmppname = groupCombo.selectedItem;
+				so.data.name = nameInput.text;
+				so.flush();
+			}
+			
+			protected function view1_viewActivateHandler(event:ViewNavigatorEvent):void {
+				var xml:XML = NativeApplication.nativeApplication.applicationDescriptor;
+				var ns:Namespace = xml.namespace();
+				version = xml.ns::versionNumber;
+				
+				so = SharedObject.getLocal(main.SHARED_OBJECT);
+				
+				menuList.selectedIndex = 0;
+			}
+			
+			protected function profileGroup_showHandler(event:FlexEvent):void {
+				if(so.data.xmmppname != null) {
+					groupCombo.selectedIndex = so.data.xmmppname.ind;
+					if(groupCombo.selectedIndex != 0) {
+						groupCombo.enabled = false;
+					}
+				}
+				
+				if(so.data.name != null) {
+					nameInput.text = so.data.name;
+				}
+			}
+			
+			protected function calendarGroup_showHandler(event:FlexEvent):void {
+				history = appetitt.readHistory();
+				historyArray = new ArrayCollection();
+				var d:Date;
+				
+				for each (var value:Object in history) {
+					d = new Date(Number(value.id));
+					value.dateLabel = dayFormatter.format(d);
+					historyArray.addItem(value);
+				}
+				
+				var srt:Sort = new Sort();
+				srt.fields = [new SortField("d", false, true)];
+				historyArray.sort = srt;
+				historyArray.refresh();
+				
+				scrollToBottom();
+			}
+			
+			/**
+			 * 
+			 * public function to force scroll down on the list component
+			 * 
+			 **/
+			protected function scrollToBottom():void {
+				var delta:Number = 0;
+				var count:int = 0;
+				
+				while (count++ < 10){
+					historyList.validateNow();
+					delta = historyList.layout.getHorizontalScrollPositionDelta(NavigationUnit.END);
+					historyList.layout.horizontalScrollPosition += delta;
+					
+					if (delta == 0) {
+						break;						
+					}
+				}
+			}
+			
+			protected function logGroup_showHandler(event:FlexEvent):void {
+				// TODO Auto-generated method stub	
+				var delta:Number = 0;
+				var count:int = 0;
+				
+				while (count++ < 10){
+					logDataList.validateNow();
+					delta = logDataList.layout.getVerticalScrollPositionDelta(NavigationUnit.END);
+					logDataList.layout.verticalScrollPosition += delta;
+					
+					if (delta == 0) {
+						break;						
+					}
+				}
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<mx:DateFormatter id="dayFormatter" formatString="EEEE DD MMMM YYYY" />
+		<fx:String id="version" />
+	</fx:Declarations>
+	
+	<s:HGroup width="{navigator.width}" height="{navigator.height}" gap="0">
+		<s:SkinnableContainer width="250" height="100%">
+			<s:VGroup width="100%" height="100%">
+				<s:Button label="LUKK" width="100%" click="showMainView(event)" />
+				<s:List id="menuList" width="100%" height="100%" dataProvider="{MENU_BUTTONS}" />
+				<s:Label width="100%" paddingLeft="5" text="{'version: '+version}" fontSize="10" />
+			</s:VGroup>
+		</s:SkinnableContainer>
+		
+		<s:SkinnableContainer width="100%" height="100%" backgroundColor="#333333">
+			<s:Group id="profileGroup" left="20" top="20" right="20" bottom="20" visible="{menuList.selectedIndex == 0}" show="profileGroup_showHandler(event)">
+				<s:VGroup gap="30">
+					<s:HGroup verticalAlign="middle">
+						<s:Label color="#FFFFFF" width="100" text="name:" />
+						<s:TextInput id="nameInput" change="nameInput_changeHandler(event)" />
+						<!-- s:ToggleSwitch skinClass="itemRenderers.ManToggleSkin" /-->
+					</s:HGroup>
+					<s:HGroup>
+						<s:Label color="#FFFFFF" width="100" text="client id:" />
+						<s:SpinnerListContainer>
+							<s:SpinnerList id="groupCombo" dataProvider="{main.IPADS_LIST}" width="300" change="menuList_changeHandler(event)" />
+						</s:SpinnerListContainer>
+					</s:HGroup>
+					<s:VGroup>
+						<s:HGroup>
+							<s:Label width="100" color="#FFFFFF" text="breakfast: "/>
+							<s:Label color="#FFFFFF" text="08:00 - 09:00"/>
+						</s:HGroup>
+						<s:HGroup>
+							<s:Label width="100" color="#FFFFFF" text="snack1: "/>
+							<s:Label color="#FFFFFF" text="10:30 - 11:00"/>
+						</s:HGroup>
+						<s:HGroup>
+							<s:Label width="100" color="#FFFFFF" text="lunch: "/>
+							<s:Label color="#FFFFFF" text="12:00 - 13:00"/>
+						</s:HGroup>
+						<s:HGroup>
+							<s:Label width="100" color="#FFFFFF" text="dinner: "/>
+							<s:Label color="#FFFFFF" text="15:00 - 16:00"/>
+						</s:HGroup>
+						<s:HGroup>
+							<s:Label width="100" color="#FFFFFF" text="snack2: "/>
+							<s:Label color="#FFFFFF" text="17:30 - 18:30"/>
+						</s:HGroup>
+						<s:HGroup>
+							<s:Label width="100" color="#FFFFFF" text="evening: "/>
+							<s:Label color="#FFFFFF" text="19:30 - 20:30"/>
+						</s:HGroup>
+					</s:VGroup>
+				</s:VGroup>
+				<s:Button id="profileGroupButton" label="save" bottom="20" right="20" enabled="false" click="saveProfile(event)" />
+			</s:Group>
+			<s:Group id="calendarGroup" left="20" top="20" right="20" bottom="20" visible="{menuList.selectedIndex == 1}" show="calendarGroup_showHandler(event)" >
+				<s:List id="historyList" width="500" height="600" dataProvider="{historyArray}" horizontalCenter="0" verticalCenter="0" scrollSnappingMode="leadingEdge" verticalScrollPolicy="off" horizontalScrollPolicy="on" itemRenderer="itemRenderers.HistoryListRenderer">
+					<s:layout>
+						<s:HorizontalLayout gap="0" />
+					</s:layout>
+				</s:List> 
+			</s:Group>
+			<s:Group id="logGroup" left="20" top="20" right="20" bottom="20" visible="{menuList.selectedIndex == 2}" show="logGroup_showHandler(event)" >
+				<s:VGroup width="100%" height="100%">
+					<s:Label color="#FFFFFF" width="100" text="User logs:" />
+					<s:List width="100%" height="100%" id="logDataList" dataProvider="{data}" itemRenderer="itemRenderers.LogsListRenderer" />
+				</s:VGroup>
+			</s:Group>
+			<s:Group id="nutritionGroup" left="20" top="20" right="20" bottom="20" visible="{menuList.selectedIndex == 3}" >
+				<s:Scroller width="100%" height="100%">
+					<s:Group width="100%">
+						<s:BitmapImage source="@Embed('assets/html/nutrition.png')" scaleMode="letterbox" />
+					</s:Group>
+				</s:Scroller>
+			</s:Group>
+			<s:Group id="onAppetittGroup" left="20" top="20" right="20" bottom="20" visible="{menuList.selectedIndex == 4}" >
+				<s:Scroller width="100%" height="100%">
+					<s:Group width="100%">
+						<s:BitmapImage source="@Embed('assets/html/omapptxt.png')" scaleMode="letterbox" />
+					</s:Group>
+				</s:Scroller>
+			</s:Group>
+		</s:SkinnableContainer>
+		
+	</s:HGroup>
+</s:View>
