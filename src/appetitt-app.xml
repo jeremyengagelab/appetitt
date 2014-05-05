@@ -3,7 +3,7 @@
 	<id>no.uio.uv.pappettit</id>
 	<filename>Appetitt</filename>
 	<name>Appetitt</name>
-	<versionNumber>2.0.12</versionNumber>
+	<versionNumber>2.0.19</versionNumber>
 	<initialWindow>
 		<content>[This value will be overwritten by Flash Builder in the output app.xml]</content>
 		<aspectRatio>landscape</aspectRatio>

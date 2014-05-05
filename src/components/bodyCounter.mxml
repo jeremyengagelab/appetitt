@@ -12,7 +12,7 @@
 			
 			import views.main;
 			
-			private static const drinkUnit:Number = 125;
+			private static const drinkUnit:Number = 250;
 			private static const drinkMax:Number = 2500;
 			private static const foodUnit:Number = 1;
 			private static const foodMax:Number = 4;

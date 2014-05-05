@@ -108,7 +108,19 @@
 				{label: "ipad9", login:"appetitt9", ind: 9},
 				{label: "ipad10", login:"appetitt10", ind: 10},
 				{label: "ipad11", login:"appetitt11", ind: 11},
-				{label: "ipad12", login:"appetitt12", ind: 12}]);
+				{label: "ipad12", login:"appetitt12", ind: 12},
+				{label: "ipad13", login:"appetitt13", ind: 13},
+				{label: "ipad14", login:"appetitt14", ind: 14},
+				{label: "ipad15", login:"appetitt15", ind: 15},
+				{label: "ipad16", login:"appetitt16", ind: 16},
+				{label: "ipad17", login:"appetitt17", ind: 17},
+				{label: "ipad18", login:"appetitt18", ind: 18},
+				{label: "ipad19", login:"appetitt19", ind: 19},
+				{label: "ipad20", login:"appetitt20", ind: 20},
+				{label: "ipad21", login:"appetitt21", ind: 21},
+				{label: "ipad22", login:"appetitt22", ind: 22},
+				{label: "ipad23", login:"appetitt23", ind: 23},
+				{label: "ipad24", login:"appetitt24", ind: 24}]);
 			
 			public static const SHARED_OBJECT:String = "no.uio.uv.appetitt";
 			
@@ -1131,12 +1143,36 @@
 					hasbrowsedToday = true;
 				}
 				
-				
 				var mi:mealItem;
+				var userNumber:Number = Number(user.substr(8));
+				
 				for (var i:int = 0; i < mealItemGroup.numElements; i++) {
 					mi = mealItemGroup.getElementAt(i) as mealItem;
 					
-					switch(user) {
+					switch(userNumber % 4) {
+						case 1:
+							if(mi.colorAppetitt1 != mealItem.CHOSEN_1) {
+								mi.colorAppetitt1 = mealItem.DEFAULT_SOCIAL;
+							}
+							break;
+						case 2:
+							if(mi.colorAppetitt2 != mealItem.CHOSEN_2) {
+								mi.colorAppetitt2 = mealItem.DEFAULT_SOCIAL;
+							}
+							break;
+						case 3:
+							if(mi.colorAppetitt3 != mealItem.CHOSEN_3) {
+								mi.colorAppetitt3 = mealItem.DEFAULT_SOCIAL;
+							}
+							break;
+						case 0:
+							if(mi.colorAppetitt4 != mealItem.CHOSEN_4) {
+								mi.colorAppetitt4 = mealItem.DEFAULT_SOCIAL;
+							}
+							break;
+					}
+					
+					/*switch(user) {
 						case IPADS_LIST[1].login:
 							if(mi.colorAppetitt1 != mealItem.CHOSEN_1) {
 								mi.colorAppetitt1 = mealItem.DEFAULT_SOCIAL;
@@ -1197,11 +1233,122 @@
 								mi.colorAppetitt4 = mealItem.DEFAULT_SOCIAL;
 							}
 							break;
-					}
+						case IPADS_LIST[13].login:
+							if(mi.colorAppetitt1 != mealItem.CHOSEN_1) {
+								mi.colorAppetitt1 = mealItem.DEFAULT_SOCIAL;
+							}
+							break;
+						case IPADS_LIST[14].login:
+							if(mi.colorAppetitt2 != mealItem.CHOSEN_2) {
+								mi.colorAppetitt2 = mealItem.DEFAULT_SOCIAL;
+							}
+							break;
+						case IPADS_LIST[15].login:
+							if(mi.colorAppetitt3 != mealItem.CHOSEN_3) {
+								mi.colorAppetitt3 = mealItem.DEFAULT_SOCIAL;
+							}
+							break;
+						case IPADS_LIST[16].login:
+							if(mi.colorAppetitt4 != mealItem.CHOSEN_4) {
+								mi.colorAppetitt4 = mealItem.DEFAULT_SOCIAL;
+							}
+							break;
+						case IPADS_LIST[17].login:
+							if(mi.colorAppetitt1 != mealItem.CHOSEN_1) {
+								mi.colorAppetitt1 = mealItem.DEFAULT_SOCIAL;
+							}
+							break;
+						case IPADS_LIST[18].login:
+							if(mi.colorAppetitt2 != mealItem.CHOSEN_2) {
+								mi.colorAppetitt2 = mealItem.DEFAULT_SOCIAL;
+							}
+							break;
+						case IPADS_LIST[19].login:
+							if(mi.colorAppetitt3 != mealItem.CHOSEN_3) {
+								mi.colorAppetitt3 = mealItem.DEFAULT_SOCIAL;
+							}
+							break;
+						case IPADS_LIST[20].login:
+							if(mi.colorAppetitt4 != mealItem.CHOSEN_4) {
+								mi.colorAppetitt4 = mealItem.DEFAULT_SOCIAL;
+							}
+							break;
+						case IPADS_LIST[21].login:
+							if(mi.colorAppetitt1 != mealItem.CHOSEN_1) {
+								mi.colorAppetitt1 = mealItem.DEFAULT_SOCIAL;
+							}
+							break;
+						case IPADS_LIST[22].login:
+							if(mi.colorAppetitt2 != mealItem.CHOSEN_2) {
+								mi.colorAppetitt2 = mealItem.DEFAULT_SOCIAL;
+							}
+							break;
+						case IPADS_LIST[23].login:
+							if(mi.colorAppetitt3 != mealItem.CHOSEN_3) {
+								mi.colorAppetitt3 = mealItem.DEFAULT_SOCIAL;
+							}
+							break;
+						case IPADS_LIST[24].login:
+							if(mi.colorAppetitt4 != mealItem.CHOSEN_4) {
+								mi.colorAppetitt4 = mealItem.DEFAULT_SOCIAL;
+							}
+							break;
+					}*/
+				}
+				
+				switch(userNumber % 4) {
+					case 1:
+						if(!hasEaten && meal.colorAppetitt1 != mealItem.CHOSEN_1 && dato == formattedToday) {
+							meal.colorAppetitt1 = mealItem.BROWSING_1;
+						}
+						else if(dato == formattedToday) {
+							meal.colorAppetitt1 = mealItem.CHOSEN_1;	
+						}
+						
+						if(resetMeal && dato == formattedToday) {
+							meal.colorAppetitt1 = mealItem.DEFAULT_SOCIAL;	
+						}
+						break;
+					case 2:
+						if(!hasEaten && meal.colorAppetitt2 != mealItem.CHOSEN_2 && dato == formattedToday) {
+							meal.colorAppetitt2 = mealItem.BROWSING_2;
+						}
+						else if(dato == formattedToday) {
+							meal.colorAppetitt2 = mealItem.CHOSEN_2;
+						}
+						
+						if(resetMeal && dato == formattedToday) {
+							meal.colorAppetitt2 = mealItem.DEFAULT_SOCIAL;	
+						}
+						break;
+					case 3:
+						if(!hasEaten && meal.colorAppetitt3 != mealItem.CHOSEN_3 && dato == formattedToday) {
+							meal.colorAppetitt3 = mealItem.BROWSING_3;
+						}
+						else if(dato == formattedToday) {
+							meal.colorAppetitt3 = mealItem.CHOSEN_3;							
+						}
+						
+						if(resetMeal && dato == formattedToday) {
+							meal.colorAppetitt3 = mealItem.DEFAULT_SOCIAL;	
+						}
+						break;
+					case 0:
+						if(!hasEaten && meal.colorAppetitt4 != mealItem.CHOSEN_4 && dato == formattedToday) {
+							meal.colorAppetitt4 = mealItem.BROWSING_4;
+						}
+						else if(dato == formattedToday) {
+							meal.colorAppetitt4 = mealItem.CHOSEN_4;
+						}
+						
+						if(resetMeal && dato == formattedToday) {
+							meal.colorAppetitt4 = mealItem.DEFAULT_SOCIAL;	
+						}
+						break;
 				}
 				
 				
-				switch(user) {
+				/*switch(user) {
 					case IPADS_LIST[1].login:
 						if(!hasEaten && meal.colorAppetitt1 != mealItem.CHOSEN_1 && dato == formattedToday) {
 							meal.colorAppetitt1 = mealItem.BROWSING_1;
@@ -1349,7 +1496,154 @@
 							meal.colorAppetitt4 = mealItem.DEFAULT_SOCIAL;	
 						}
 						break;
-				}
+					case IPADS_LIST[13].login:
+						if(!hasEaten && meal.colorAppetitt1 != mealItem.CHOSEN_1 && dato == formattedToday) {
+							meal.colorAppetitt1 = mealItem.BROWSING_1;
+						}
+						else if(dato == formattedToday) {
+							meal.colorAppetitt1 = mealItem.CHOSEN_1;	
+						}
+						
+						if(resetMeal && dato == formattedToday) {
+							meal.colorAppetitt1 = mealItem.DEFAULT_SOCIAL;	
+						}
+						
+						break;
+					case IPADS_LIST[14].login:
+						if(!hasEaten && meal.colorAppetitt2 != mealItem.CHOSEN_2 && dato == formattedToday) {
+							meal.colorAppetitt2 = mealItem.BROWSING_2;
+						}
+						else if(dato == formattedToday) {
+							meal.colorAppetitt2 = mealItem.CHOSEN_2;
+						}
+						
+						if(resetMeal && dato == formattedToday) {
+							meal.colorAppetitt2 = mealItem.DEFAULT_SOCIAL;	
+						}
+						break;
+					case IPADS_LIST[15].login:
+						if(!hasEaten && meal.colorAppetitt3 != mealItem.CHOSEN_3 && dato == formattedToday) {
+							meal.colorAppetitt3 = mealItem.BROWSING_3;
+						}
+						else if(dato == formattedToday) {
+							meal.colorAppetitt3 = mealItem.CHOSEN_3;							
+						}
+						
+						if(resetMeal && dato == formattedToday) {
+							meal.colorAppetitt3 = mealItem.DEFAULT_SOCIAL;	
+						}
+						break;
+					case IPADS_LIST[16].login:
+						if(!hasEaten && meal.colorAppetitt4 != mealItem.CHOSEN_4 && dato == formattedToday) {
+							meal.colorAppetitt4 = mealItem.BROWSING_4;
+						}
+						else if(dato == formattedToday) {
+							meal.colorAppetitt4 = mealItem.CHOSEN_4;
+						}
+						
+						if(resetMeal && dato == formattedToday) {
+							meal.colorAppetitt4 = mealItem.DEFAULT_SOCIAL;	
+						}
+						break;
+					case IPADS_LIST[17].login:
+						if(!hasEaten && meal.colorAppetitt1 != mealItem.CHOSEN_1 && dato == formattedToday) {
+							meal.colorAppetitt1 = mealItem.BROWSING_1;
+						}
+						else if(dato == formattedToday) {
+							meal.colorAppetitt1 = mealItem.CHOSEN_1;	
+						}
+						
+						if(resetMeal && dato == formattedToday) {
+							meal.colorAppetitt1 = mealItem.DEFAULT_SOCIAL;	
+						}
+						
+						break;
+					case IPADS_LIST[18].login:
+						if(!hasEaten && meal.colorAppetitt2 != mealItem.CHOSEN_2 && dato == formattedToday) {
+							meal.colorAppetitt2 = mealItem.BROWSING_2;
+						}
+						else if(dato == formattedToday) {
+							meal.colorAppetitt2 = mealItem.CHOSEN_2;
+						}
+						
+						if(resetMeal && dato == formattedToday) {
+							meal.colorAppetitt2 = mealItem.DEFAULT_SOCIAL;	
+						}
+						break;
+					case IPADS_LIST[19].login:
+						if(!hasEaten && meal.colorAppetitt3 != mealItem.CHOSEN_3 && dato == formattedToday) {
+							meal.colorAppetitt3 = mealItem.BROWSING_3;
+						}
+						else if(dato == formattedToday) {
+							meal.colorAppetitt3 = mealItem.CHOSEN_3;							
+						}
+						
+						if(resetMeal && dato == formattedToday) {
+							meal.colorAppetitt3 = mealItem.DEFAULT_SOCIAL;	
+						}
+						break;
+					case IPADS_LIST[20].login:
+						if(!hasEaten && meal.colorAppetitt4 != mealItem.CHOSEN_4 && dato == formattedToday) {
+							meal.colorAppetitt4 = mealItem.BROWSING_4;
+						}
+						else if(dato == formattedToday) {
+							meal.colorAppetitt4 = mealItem.CHOSEN_4;
+						}
+						
+						if(resetMeal && dato == formattedToday) {
+							meal.colorAppetitt4 = mealItem.DEFAULT_SOCIAL;	
+						}
+						break;
+					case IPADS_LIST[21].login:
+						if(!hasEaten && meal.colorAppetitt1 != mealItem.CHOSEN_1 && dato == formattedToday) {
+							meal.colorAppetitt1 = mealItem.BROWSING_1;
+						}
+						else if(dato == formattedToday) {
+							meal.colorAppetitt1 = mealItem.CHOSEN_1;	
+						}
+						
+						if(resetMeal && dato == formattedToday) {
+							meal.colorAppetitt1 = mealItem.DEFAULT_SOCIAL;	
+						}
+						
+						break;
+					case IPADS_LIST[22].login:
+						if(!hasEaten && meal.colorAppetitt2 != mealItem.CHOSEN_2 && dato == formattedToday) {
+							meal.colorAppetitt2 = mealItem.BROWSING_2;
+						}
+						else if(dato == formattedToday) {
+							meal.colorAppetitt2 = mealItem.CHOSEN_2;
+						}
+						
+						if(resetMeal && dato == formattedToday) {
+							meal.colorAppetitt2 = mealItem.DEFAULT_SOCIAL;	
+						}
+						break;
+					case IPADS_LIST[23].login:
+						if(!hasEaten && meal.colorAppetitt3 != mealItem.CHOSEN_3 && dato == formattedToday) {
+							meal.colorAppetitt3 = mealItem.BROWSING_3;
+						}
+						else if(dato == formattedToday) {
+							meal.colorAppetitt3 = mealItem.CHOSEN_3;							
+						}
+						
+						if(resetMeal && dato == formattedToday) {
+							meal.colorAppetitt3 = mealItem.DEFAULT_SOCIAL;	
+						}
+						break;
+					case IPADS_LIST[24].login:
+						if(!hasEaten && meal.colorAppetitt4 != mealItem.CHOSEN_4 && dato == formattedToday) {
+							meal.colorAppetitt4 = mealItem.BROWSING_4;
+						}
+						else if(dato == formattedToday) {
+							meal.colorAppetitt4 = mealItem.CHOSEN_4;
+						}
+						
+						if(resetMeal && dato == formattedToday) {
+							meal.colorAppetitt4 = mealItem.DEFAULT_SOCIAL;	
+						}
+						break;
+				}*/
 			}
 			
 			/**
